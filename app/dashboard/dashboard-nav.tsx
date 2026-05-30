@@ -8,6 +8,7 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  PanelLeft,
   Search,
   Stethoscope,
   UserRound,
@@ -18,14 +19,65 @@ import { Button } from '@/components/ui/button'
 import { ThemeToggle } from './theme-toggle'
 
 type DashboardNavProps = {
+  userType: 'patient' | 'doctor'
+  toggleId: string
+}
+
+type AuthTopBarProps = {
   userName: string
   userEmail: string
   userType: 'patient' | 'doctor'
 }
 
-export function DashboardNav({ userName, userEmail, userType }: DashboardNavProps) {
+export function AuthTopBar({ userName, userEmail, userType }: AuthTopBarProps) {
   const profileHref = userType === 'doctor' ? '/doctor-profile' : '/patient-profile'
   const userLabel = userName || userEmail
+
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="flex h-16 items-center justify-between gap-4 px-4">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image
+            src="/hellodoc.png"
+            alt="HelloDoc"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg bg-foreground object-contain p-1"
+            priority
+          />
+          <span className="text-xl font-bold text-primary">HelloDoc</span>
+        </Link>
+
+        <div className="flex items-center justify-end gap-2">
+          <ThemeToggle />
+          <Link
+            href={profileHref}
+            className="rounded-md px-2 py-1 text-right transition-colors hover:bg-accent"
+          >
+            <p className="max-w-36 truncate text-sm font-medium leading-tight sm:max-w-48">
+              {userLabel}
+            </p>
+            <p className="text-xs capitalize leading-tight text-muted-foreground">{userType}</p>
+          </Link>
+          <form
+            action={async () => {
+              'use server'
+              await auth.api.signOut({ headers: await headers() })
+              redirect('/')
+            }}
+          >
+            <Button variant="outline" type="submit" size="sm" className="gap-2">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
+          </form>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
   const navItems =
     userType === 'doctor'
       ? [
@@ -44,23 +96,9 @@ export function DashboardNav({ userName, userEmail, userType }: DashboardNavProp
         ]
 
   return (
-    <aside className="group/sidebar z-50 border-b bg-background/95 backdrop-blur transition-all duration-200 lg:fixed lg:inset-y-0 lg:left-0 lg:w-20 lg:border-b-0 lg:border-r lg:hover:w-72 lg:focus-within:w-72">
-      <div className="flex min-h-16 flex-wrap items-center justify-between gap-4 px-4 py-3 lg:h-full lg:flex-col lg:items-stretch lg:justify-start lg:overflow-hidden lg:p-4">
-        <Link href="/dashboard" className="flex items-center gap-2 lg:mb-6 lg:h-10 lg:justify-start">
-          <Image
-            src="/hellodoc.png"
-            alt="HelloDoc"
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 rounded-lg bg-foreground object-contain p-1"
-            priority
-          />
-          <span className="text-2xl font-bold text-primary transition-opacity lg:opacity-0 lg:group-hover/sidebar:opacity-100 lg:group-focus-within/sidebar:opacity-100">
-            HelloDoc
-          </span>
-        </Link>
-
-        <nav className="order-3 flex w-full gap-2 overflow-x-auto lg:order-none lg:flex-col lg:overflow-visible">
+    <aside className="app-sidebar fixed inset-x-0 top-16 z-40 border-b bg-background/95 backdrop-blur transition-all duration-200 lg:inset-x-auto lg:bottom-0 lg:left-0 lg:w-16 lg:border-b-0 lg:border-r">
+      <div className="flex min-h-14 items-center gap-2 overflow-x-auto px-3 py-2 lg:h-full lg:flex-col lg:items-stretch lg:justify-start lg:overflow-hidden lg:p-3">
+        <nav className="flex w-full gap-2 lg:flex-col">
           {navItems.map((item) => {
             const Icon = item.icon
 
@@ -68,10 +106,10 @@ export function DashboardNav({ userName, userEmail, userType }: DashboardNavProp
               <Link key={item.label} href={item.href} className="shrink-0" title={item.label}>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 lg:h-11 lg:px-3"
+                  className="w-full justify-start gap-2 lg:h-10 lg:px-3"
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap transition-opacity lg:opacity-0 lg:group-hover/sidebar:opacity-100 lg:group-focus-within/sidebar:opacity-100">
+                  <span className="sidebar-label whitespace-nowrap transition-all duration-200">
                     {item.label}
                   </span>
                 </Button>
@@ -80,37 +118,20 @@ export function DashboardNav({ userName, userEmail, userType }: DashboardNavProp
           })}
         </nav>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 lg:mt-auto lg:flex-col lg:items-stretch">
-          <Link
-            href={profileHref}
-            className="flex min-h-11 items-center gap-2 rounded-md border px-3 py-2 text-right transition-colors hover:bg-accent lg:text-left"
+        <div className="ml-auto lg:mt-auto lg:ml-0">
+          <label
+            htmlFor={toggleId}
+            title="Toggle sidebar"
+            className="flex h-10 cursor-pointer items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent"
           >
-            <UserRound className="hidden h-4 w-4 shrink-0 lg:block" />
-            <span className="transition-opacity lg:opacity-0 lg:group-hover/sidebar:opacity-100 lg:group-focus-within/sidebar:opacity-100">
-              <p className="max-w-40 truncate text-sm font-medium leading-tight">{userLabel}</p>
-              <p className="text-xs capitalize leading-tight text-muted-foreground">{userType}</p>
+            <PanelLeft className="h-4 w-4 shrink-0" />
+            <span className="sidebar-label hidden whitespace-nowrap transition-all duration-200 lg:inline">
+              Collapse menu
             </span>
-          </Link>
-          <div className="flex gap-2 lg:grid lg:grid-cols-[auto_1fr] lg:items-center">
-            <ThemeToggle />
-            <span className="hidden text-sm text-muted-foreground transition-opacity lg:block lg:opacity-0 lg:group-hover/sidebar:opacity-100 lg:group-focus-within/sidebar:opacity-100">
-              Theme
+            <span className="sidebar-collapsed-label hidden whitespace-nowrap lg:inline">
+              Expand menu
             </span>
-          </div>
-          <form
-            action={async () => {
-              'use server'
-              await auth.api.signOut({ headers: await headers() })
-              redirect('/')
-            }}
-          >
-            <Button variant="outline" type="submit" size="sm" className="w-full justify-start gap-2">
-              <LogOut className="h-4 w-4 shrink-0" />
-              <span className="transition-opacity lg:opacity-0 lg:group-hover/sidebar:opacity-100 lg:group-focus-within/sidebar:opacity-100">
-                Sign Out
-              </span>
-            </Button>
-          </form>
+          </label>
         </div>
       </div>
     </aside>

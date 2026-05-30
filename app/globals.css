@@ -123,3 +123,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media (min-width: 1024px) {
+  .app-content {
+    padding-left: 4rem;
+  }
+
+  #app-sidebar-expanded:checked ~ .app-content {
+    padding-left: 14rem;
+  }
+
+  #app-sidebar-expanded:checked ~ .app-sidebar {
+    width: 14rem;
+  }
+
+  #app-sidebar-expanded:not(:checked) ~ .app-sidebar .sidebar-label {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  #app-sidebar-expanded:checked ~ .app-sidebar .sidebar-label {
+    width: auto;
+    opacity: 1;
+  }
+
+  #app-sidebar-expanded:checked ~ .app-sidebar .sidebar-collapsed-label {
+    display: none;
+  }
+}

@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { getUserRole } from '@/app/actions/helpers'
-import { DashboardNav, PublicNav } from '@/app/dashboard/dashboard-nav'
+import { AuthTopBar, DashboardNav, PublicNav } from '@/app/dashboard/dashboard-nav'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
@@ -48,14 +48,27 @@ export default async function RootLayout({
       <body className="font-sans antialiased bg-background">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           {session?.user ? (
-            <>
-              <DashboardNav
+            <div className="min-h-screen">
+              <input
+                id="app-sidebar-expanded"
+                type="checkbox"
+                defaultChecked
+                className="peer/sidebar sr-only"
+                aria-hidden="true"
+              />
+              <AuthTopBar
                 userName={session.user.name || ''}
                 userEmail={session.user.email || ''}
                 userType={userType}
               />
-              <div className="lg:pl-20">{children}</div>
-            </>
+              <DashboardNav
+                userType={userType}
+                toggleId="app-sidebar-expanded"
+              />
+              <div className="app-content pt-32 transition-[padding] duration-200 lg:pt-16">
+                {children}
+              </div>
+            </div>
           ) : (
             <>
               <PublicNav />

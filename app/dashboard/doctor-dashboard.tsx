@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   CalendarDays,
@@ -69,23 +70,45 @@ export function DoctorDashboard({ userName, consultations }: DoctorDashboardProp
 
   return (
     <main className="container mx-auto px-4 py-10">
-      <section className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-primary">
-            Doctor Dashboard
-          </p>
-          <h1 className="mt-2 text-4xl font-bold">Hello, Dr. {userName}</h1>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
-            <span className="h-2 w-2 rounded-full bg-green-600" />
-            Available
+      <section className="relative mb-10 overflow-hidden rounded-[2.5rem_1.25rem_2.75rem_1.5rem] border bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.38),transparent_30%),radial-gradient(circle_at_82%_72%,rgba(45,212,191,0.32),transparent_34%),linear-gradient(135deg,rgba(240,253,250,0.96),rgba(204,251,241,0.78))] p-6 shadow-sm dark:bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.22),transparent_30%),radial-gradient(circle_at_82%_72%,rgba(45,212,191,0.2),transparent_34%),linear-gradient(135deg,rgba(19,78,74,0.82),rgba(15,118,110,0.32))] sm:p-8">
+        <div className="absolute -left-10 -top-8 h-32 w-32 rounded-full bg-teal-300/25 blur-2xl" />
+        <div className="absolute -bottom-12 right-20 h-40 w-40 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium uppercase tracking-wide text-teal-800 dark:text-teal-100">
+              Doctor Dashboard
+            </p>
+            <h1 className="mt-2 text-4xl font-bold text-teal-950 dark:text-white">
+              Hello, Dr. {userName}
+            </h1>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-green-700 shadow-sm dark:bg-background/80 dark:text-green-300">
+              <span className="h-2 w-2 rounded-full bg-green-600" />
+              Available
+            </div>
+            <div className="mt-5">
+              <Link href="/doctor-profile">
+                <Button variant="outline" className="gap-2 bg-white/80 dark:bg-background/80">
+                  <UserCog className="h-4 w-4" />
+                  Edit Profile
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative flex items-end justify-center lg:min-w-72">
+            <div className="absolute left-2 top-2 rounded-full bg-white/85 px-4 py-2 text-sm font-bold text-teal-900 shadow-sm dark:bg-background/85 dark:text-teal-100">
+              Hello!
+            </div>
+            <Image
+              src="/1.png"
+              alt="HelloDoc assistant saying hello"
+              width={280}
+              height={280}
+              className="relative max-h-64 w-auto object-contain"
+              priority
+            />
           </div>
         </div>
-        <Link href="/doctor-profile">
-          <Button variant="outline" className="gap-2">
-            <UserCog className="h-4 w-4" />
-            Edit Profile
-          </Button>
-        </Link>
       </section>
 
       <section className="mb-8 grid gap-4 md:grid-cols-4">
