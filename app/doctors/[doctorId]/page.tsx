@@ -42,19 +42,17 @@ export default async function DoctorProfilePage({
 
   return (
     <div className="min-h-screen">
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center gap-4 px-4">
+      <main className="container mx-auto max-w-4xl px-4 py-12">
+        <div className="mb-6 flex items-center gap-4">
           <Link href="/doctors">
             <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
           </Link>
           <h1 className="text-lg font-semibold">Doctor Profile</h1>
         </div>
-      </nav>
 
-      <main className="container mx-auto max-w-4xl px-4 py-12">
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
           <Card>
             <CardHeader>

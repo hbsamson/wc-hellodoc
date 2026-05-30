@@ -90,8 +90,8 @@ export default async function PatientMedicalHistoryPage() {
 
   return (
     <div className="min-h-screen">
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center gap-4 px-4">
+      <main className="container mx-auto max-w-4xl px-4 py-10">
+        <div className="mb-6 flex items-center gap-4">
           <Link href="/patient-profile">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
@@ -100,9 +100,7 @@ export default async function PatientMedicalHistoryPage() {
           </Link>
           <h1 className="text-lg font-semibold">Medical History</h1>
         </div>
-      </nav>
 
-      <main className="container mx-auto max-w-4xl px-4 py-10">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <section className="space-y-4">
             <div>

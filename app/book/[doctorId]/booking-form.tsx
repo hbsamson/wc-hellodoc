@@ -128,8 +128,8 @@ export function BookingForm({ doctor }: BookingFormProps) {
 
   return (
     <div className="min-h-screen">
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center gap-4 px-4">
+      <main className="container mx-auto max-w-md px-4 py-12">
+        <div className="mb-6 flex items-center gap-4">
           <Link href="/doctors">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -138,9 +138,7 @@ export function BookingForm({ doctor }: BookingFormProps) {
           </Link>
           <h1 className="text-lg font-semibold">Book Consultation</h1>
         </div>
-      </nav>
 
-      <main className="container mx-auto max-w-md px-4 py-12">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

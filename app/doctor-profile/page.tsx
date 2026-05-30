@@ -249,11 +249,11 @@ export default async function DoctorProfileEditorPage({
 
   return (
     <div className="min-h-screen">
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center gap-4 px-4">
+      <main className="container mx-auto max-w-2xl px-4 py-12">
+        <div className="mb-6 flex items-center gap-4">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
           </Link>
@@ -261,9 +261,7 @@ export default async function DoctorProfileEditorPage({
             {isOnboarding ? 'Doctor Onboarding' : 'Doctor Profile'}
           </h1>
         </div>
-      </nav>
 
-      <main className="container mx-auto max-w-2xl px-4 py-12">
         <Card>
           <CardHeader>
             <CardTitle>

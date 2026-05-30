@@ -16,26 +16,6 @@ export default async function DoctorsPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">H</span>
-            </div>
-            <span className="text-xl font-bold text-primary">HelloDoc</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
-            </Link>
-            <Link href="/consultations">
-              <Button variant="ghost">Consultations</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       {/* Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="mb-12">

@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
+import { getUserRole } from '@/app/actions/helpers'
+import { DashboardNav, PublicNav } from '@/app/dashboard/dashboard-nav'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
@@ -30,16 +34,34 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  const userRole = session?.user ? await getUserRole() : null
+  const userType = userRole === 'doctor' ? 'doctor' : 'patient'
+
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
       <body className="font-sans antialiased bg-background">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          {children}
+          {session?.user ? (
+            <>
+              <DashboardNav
+                userName={session.user.name || ''}
+                userEmail={session.user.email || ''}
+                userType={userType}
+              />
+              <div className="lg:pl-20">{children}</div>
+            </>
+          ) : (
+            <>
+              <PublicNav />
+              {children}
+            </>
+          )}
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
