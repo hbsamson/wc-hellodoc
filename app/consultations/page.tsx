@@ -26,7 +26,15 @@ import {
   VideoIcon,
 } from "lucide-react";
 
-type Consultation = Awaited<ReturnType<typeof getPatientConsultations>>[number];
+type PatientConsultation = Awaited<
+  ReturnType<typeof getPatientConsultations>
+>[number];
+
+type DoctorConsultation = Awaited<
+  ReturnType<typeof getDoctorConsultations>
+>[number];
+
+type Consultation = PatientConsultation | DoctorConsultation;
 
 export default async function ConsultationsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
