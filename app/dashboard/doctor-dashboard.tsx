@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DoctorAvailabilityToggle } from "@/components/doctor-availability-toggle";
 
 type Consultation = {
   id: string;
@@ -27,6 +28,7 @@ type Consultation = {
 type DoctorDashboardProps = {
   userName: string;
   consultations: Consultation[];
+  isAvailable: boolean;
 };
 
 const doctorFeatures = [
@@ -65,6 +67,7 @@ const doctorFeatures = [
 export function DoctorDashboard({
   userName,
   consultations,
+  isAvailable,
 }: DoctorDashboardProps) {
   const upcomingConsultations = consultations.filter(
     (consultation) =>
@@ -92,10 +95,28 @@ export function DoctorDashboard({
             <h1 className="mt-2 text-4xl font-bold text-teal-950 dark:text-white">
               Hello, Dr. {userName}
             </h1>
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-green-700 shadow-sm dark:bg-background/80 dark:text-green-300">
-              <span className="h-2 w-2 rounded-full bg-green-600" />
-              Available
+
+            {/* Availability toggle — Switch component */}
+            <div className="mt-3">
+              <DoctorAvailabilityToggle isAvailable={isAvailable} />
             </div>
+
+            {/* Upcoming & Completed text */}
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-teal-700 dark:text-teal-200">
+              <span>
+                <strong className="font-semibold">
+                  {upcomingConsultations.length}
+                </strong>{" "}
+                upcoming
+              </span>
+              <span>
+                <strong className="font-semibold">
+                  {completedConsultations.length}
+                </strong>{" "}
+                completed
+              </span>
+            </div>
+
             <div className="mt-5">
               <Link href="/doctor-profile">
                 <Button
@@ -123,25 +144,6 @@ export function DoctorDashboard({
             />
           </div>
         </div>
-      </section>
-
-      <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <SummaryCard
-          title="Active"
-          value={activeConsultations.length}
-          label="Live consultations"
-        />
-        <SummaryCard
-          title="Upcoming"
-          value={upcomingConsultations.length}
-          label="Scheduled visits"
-        />
-        <SummaryCard
-          title="Completed"
-          value={completedConsultations.length}
-          label="Finished visits"
-        />
-        <SummaryCard title="Availability" value="Open" label="Profile status" />
       </section>
 
       <section className="mb-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -202,26 +204,6 @@ export function DoctorDashboard({
         <MiniCalendar />
       </section>
     </main>
-  );
-}
-
-function SummaryCard({
-  title,
-  value,
-  label,
-}: {
-  title: string;
-  value: number | string;
-  label: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <p className="mt-2 text-3xl font-bold">{value}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{label}</p>
-      </CardContent>
-    </Card>
   );
 }
 

@@ -142,6 +142,8 @@ export const doctorLicenseFiles = pgTable("doctor_license_files", {
   mimeType: text("mime_type").notNull(),
   filename: text("filename").notNull(),
   size: integer("size").notNull(),
+  url: text("url"),
+  publicId: text("public_id"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 

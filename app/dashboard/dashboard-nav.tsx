@@ -178,9 +178,7 @@ export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
             <span className="sidebar-label hidden whitespace-nowrap transition-all duration-200 lg:inline">
               Collapse menu
             </span>
-            <span className="sidebar-collapsed-label hidden whitespace-nowrap lg:inline">
-              Expand menu
-            </span>
+            <span className="sidebar-collapsed-label hidden whitespace-nowrap lg:inline"></span>
           </label>
         </div>
       </div>
