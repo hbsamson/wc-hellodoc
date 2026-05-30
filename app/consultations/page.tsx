@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { ConsultationStartTimer } from '@/components/consultation-start-timer'
 import Link from 'next/link'
 import {
   Calendar,
@@ -106,7 +107,7 @@ export default async function ConsultationsPage() {
             </div>
           </div>
 
-          <div className="grid min-w-full gap-3 rounded-xl bg-white/70 p-4 shadow-sm dark:bg-background/70 sm:min-w-80">
+          <div className="grid w-full min-w-0 gap-3 rounded-xl bg-white/70 p-4 shadow-sm dark:bg-background/70 lg:w-[380px] lg:shrink-0">
             <p className="text-sm font-medium text-teal-950 dark:text-teal-50">
               Upcoming schedule
             </p>
@@ -303,13 +304,17 @@ function ConsultationRow({
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-md border p-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between">
-      <div className="grid gap-2">
+      <div className="grid min-w-0 gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={consultation.status} tone={statusTone} />
           <span className="text-sm text-muted-foreground">
             {formatDateTime(consultation.scheduledAt)}
           </span>
         </div>
+        <ConsultationStartTimer
+          scheduledAt={new Date(consultation.scheduledAt).toISOString()}
+          status={consultation.status}
+        />
         {consultation.notes && (
           <p className="line-clamp-2 text-sm text-muted-foreground">
             {consultation.notes}
@@ -335,7 +340,7 @@ function ScheduleMiniItem({ consultation }: { consultation: Consultation }) {
       className="rounded-md border bg-background/80 p-3 transition-colors hover:border-primary"
     >
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-semibold">
             {new Date(consultation.scheduledAt).toLocaleDateString()}
           </p>
@@ -345,6 +350,11 @@ function ScheduleMiniItem({ consultation }: { consultation: Consultation }) {
               minute: '2-digit',
             })}
           </p>
+          <ConsultationStartTimer
+            scheduledAt={new Date(consultation.scheduledAt).toISOString()}
+            status={consultation.status}
+            compact
+          />
         </div>
         <StatusBadge
           status={consultation.status}
@@ -362,7 +372,7 @@ function ScheduleListItem({ consultation }: { consultation: Consultation }) {
       className="block rounded-md border p-4 transition-colors hover:border-primary"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="font-semibold">
             {new Date(consultation.scheduledAt).toLocaleDateString()}
           </p>
@@ -373,6 +383,13 @@ function ScheduleListItem({ consultation }: { consultation: Consultation }) {
               minute: '2-digit',
             })}
           </p>
+          <div className="mt-2">
+            <ConsultationStartTimer
+              scheduledAt={new Date(consultation.scheduledAt).toISOString()}
+              status={consultation.status}
+              compact
+            />
+          </div>
         </div>
         <StatusBadge
           status={consultation.status}
@@ -397,7 +414,11 @@ function StatusBadge({
         ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
         : 'bg-muted text-muted-foreground'
 
-  return <Badge className={className}>{status}</Badge>
+  return (
+    <Badge className={`${className} shrink-0 whitespace-nowrap capitalize`}>
+      {status}
+    </Badge>
+  )
 }
 
 function formatDateTime(value: string | Date) {

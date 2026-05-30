@@ -1,7 +1,12 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { consultations, prescriptions, user } from '@/lib/db/schema'
+import {
+  consultations,
+  patientMedicalFiles,
+  prescriptions,
+  user,
+} from '@/lib/db/schema'
 import {
   CONSULTATION_BLOCK_MINUTES,
   isThirtyMinuteBlock,
@@ -211,11 +216,25 @@ export async function getConsultationWorkspace(consultationId: string) {
     .where(eq(prescriptions.consultationId, consultation.id))
     .limit(1)
 
+  const medicalFiles = await db
+    .select({
+      id: patientMedicalFiles.id,
+      filename: patientMedicalFiles.filename,
+      mimeType: patientMedicalFiles.mimeType,
+      size: patientMedicalFiles.size,
+      description: patientMedicalFiles.description,
+      createdAt: patientMedicalFiles.createdAt,
+    })
+    .from(patientMedicalFiles)
+    .where(eq(patientMedicalFiles.userId, consultation.patientId))
+    .orderBy(desc(patientMedicalFiles.createdAt))
+
   return {
     consultation,
     patient,
     doctor,
     consultationHistory,
+    medicalFiles,
     prescription: prescription || null,
     isDoctor: consultation.doctorId === userId,
     isPatient: consultation.patientId === userId,

@@ -1,8 +1,8 @@
 import { headers } from 'next/headers'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { patientMedicalFiles } from '@/lib/db/schema'
+import { consultations, patientMedicalFiles } from '@/lib/db/schema'
 
 export async function GET(
   _request: Request,
@@ -20,8 +20,25 @@ export async function GET(
     .where(eq(patientMedicalFiles.id, fileId))
     .limit(1)
 
-  if (!file[0] || file[0].userId !== session.user.id) {
+  if (!file[0]) {
     return new Response('Not found', { status: 404 })
+  }
+
+  if (file[0].userId !== session.user.id) {
+    const consultation = await db
+      .select({ id: consultations.id })
+      .from(consultations)
+      .where(
+        and(
+          eq(consultations.patientId, file[0].userId),
+          eq(consultations.doctorId, session.user.id),
+        ),
+      )
+      .limit(1)
+
+    if (!consultation[0]) {
+      return new Response('Not found', { status: 404 })
+    }
   }
 
   const filename = encodeURIComponent(file[0].filename)
