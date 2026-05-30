@@ -7,11 +7,15 @@ import {
   FileText,
   FolderOpen,
   Upload,
+  Pill,
+  Clock,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import {
   getPatientMedicalFiles,
   savePatientMedicalFile,
+  getPatientConsultationHistory,
+  getPatientPrescriptions,
 } from "@/app/actions/medical-history";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 function optionalString(value: FormDataEntryValue | null) {
   if (typeof value !== "string" || value.trim() === "") {
@@ -90,10 +95,12 @@ export default async function PatientMedicalHistoryPage() {
   }
 
   const files = await getPatientMedicalFiles();
+  const consultationHistory = await getPatientConsultationHistory();
+  const prescriptions = await getPatientPrescriptions();
 
   return (
     <div className="min-h-screen">
-      <main className="container mx-auto max-w-4xl px-4 py-10">
+      <main className="container mx-auto max-w-6xl px-4 py-10">
         <div className="mb-6 flex items-center gap-4">
           <Link href="/patient-profile">
             <Button variant="ghost" size="sm">
@@ -105,66 +112,221 @@ export default async function PatientMedicalHistoryPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="space-y-4">
+          <section className="space-y-6">
+            {/* Historical Files Section */}
             <div>
-              <h2 className="text-2xl font-bold">Historical Files</h2>
-              <p className="text-sm text-muted-foreground">
-                View prescriptions and medical documents you have uploaded.
-              </p>
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold">Uploaded Records</h2>
+                <p className="text-sm text-muted-foreground">
+                  View prescriptions and medical documents you have uploaded.
+                </p>
+              </div>
+
+              {files.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center py-12 text-center">
+                    <FolderOpen className="mb-4 h-10 w-10 text-muted-foreground" />
+                    <p className="font-medium">No medical files yet</p>
+                    <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                      Upload old prescriptions, lab results, referrals, or other
+                      records so they are ready for future consultations.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {files.map((file) => (
+                    <Card key={file.id}>
+                      <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                            <FileText className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">
+                              {file.filename}
+                            </p>
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              <span>{formatFileSize(file.size)}</span>
+                              <span className="flex items-center gap-1">
+                                <CalendarDays className="h-3 w-3" />
+                                {formatDate(file.createdAt)}
+                              </span>
+                            </div>
+                            {file.description && (
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {file.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Link href={file.url} target="_blank">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                          >
+                            View
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {files.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center py-12 text-center">
-                  <FolderOpen className="mb-4 h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium">No medical files yet</p>
-                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                    Upload old prescriptions, lab results, referrals, or other
-                    records so they are ready for future consultations.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {files.map((file) => (
-                  <Card key={file.id}>
-                    <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex min-w-0 gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                          <FileText className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">
-                            {file.filename}
-                          </p>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                            <span>{formatFileSize(file.size)}</span>
-                            <span className="flex items-center gap-1">
-                              <CalendarDays className="h-3 w-3" />
-                              {formatDate(file.createdAt)}
-                            </span>
+            {/* Consultation History Section */}
+            <div>
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold">Consultation History</h2>
+                <p className="text-sm text-muted-foreground">
+                  Review your previous consultations with doctors.
+                </p>
+              </div>
+
+              {consultationHistory.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center py-12 text-center">
+                    <Clock className="mb-4 h-10 w-10 text-muted-foreground" />
+                    <p className="font-medium">No consultations yet</p>
+                    <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                      Your past consultations will appear here.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {consultationHistory.map((consultation) => (
+                    <Card key={consultation.id}>
+                      <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">
+                              Dr. {consultation.doctorName}
+                            </p>
+                            {consultation.specialty && (
+                              <Badge variant="secondary" className="text-xs">
+                                {consultation.specialty}
+                              </Badge>
+                            )}
                           </div>
-                          {file.description && (
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {file.description}
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {formatDate(consultation.scheduledAt)}
+                            {consultation.startedAt && (
+                              <span className="ml-2">
+                                (
+                                {new Date(
+                                  consultation.startedAt,
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                                )
+                              </span>
+                            )}
+                          </p>
+                          {consultation.notes && (
+                            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                              {consultation.notes}
                             </p>
                           )}
                         </div>
-                      </div>
-                      <Link href={file.url} target="_blank">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto"
-                        >
-                          View
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex flex-col items-start gap-2 sm:items-end">
+                          <Badge
+                            variant={
+                              consultation.status === "completed"
+                                ? "default"
+                                : consultation.status === "scheduled"
+                                  ? "secondary"
+                                  : "outline"
+                            }
+                            className="capitalize"
+                          >
+                            {consultation.status}
+                          </Badge>
+                          <Link href={`/consultations/${consultation.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto"
+                            >
+                              View Details
+                            </Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Prescriptions Section */}
+            <div>
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold">Prescriptions</h2>
+                <p className="text-sm text-muted-foreground">
+                  View prescriptions from your completed consultations.
+                </p>
               </div>
-            )}
+
+              {prescriptions.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center py-12 text-center">
+                    <Pill className="mb-4 h-10 w-10 text-muted-foreground" />
+                    <p className="font-medium">No prescriptions yet</p>
+                    <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                      Prescriptions from your consultations will appear here.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {prescriptions.map((prescription) => (
+                    <Card key={prescription.id}>
+                      <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">
+                              Dr. {prescription.doctorName}
+                            </p>
+                            {prescription.doctorSpecialty && (
+                              <Badge variant="secondary" className="text-xs">
+                                {prescription.doctorSpecialty}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {formatDate(prescription.consultationDate)}
+                          </p>
+                          <div className="mt-3 space-y-2">
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground">
+                                MEDICATIONS
+                              </p>
+                              <p className="mt-1 whitespace-pre-wrap text-sm">
+                                {prescription.medications}
+                              </p>
+                            </div>
+                            {prescription.instructions && (
+                              <div>
+                                <p className="text-xs font-semibold text-muted-foreground">
+                                  INSTRUCTIONS
+                                </p>
+                                <p className="mt-1 text-sm">
+                                  {prescription.instructions}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
 
           <Card className="h-fit">

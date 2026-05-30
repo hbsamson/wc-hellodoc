@@ -1,7 +1,12 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { patientMedicalFiles } from "@/lib/db/schema";
+import {
+  patientMedicalFiles,
+  consultations,
+  prescriptions,
+  user,
+} from "@/lib/db/schema";
 import { cloudinary } from "@/lib/cloudinary";
 import { desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -63,4 +68,53 @@ export async function getPatientMedicalFiles() {
     .from(patientMedicalFiles)
     .where(eq(patientMedicalFiles.userId, userId))
     .orderBy(desc(patientMedicalFiles.createdAt));
+}
+
+export async function getPatientConsultationHistory() {
+  const userId = await getUserId();
+
+  const consultationHistory = await db
+    .select({
+      id: consultations.id,
+      status: consultations.status,
+      scheduledAt: consultations.scheduledAt,
+      startedAt: consultations.startedAt,
+      endedAt: consultations.endedAt,
+      notes: consultations.notes,
+      doctorId: consultations.doctorId,
+      doctorName: user.name,
+      specialty: user.specialty,
+    })
+    .from(consultations)
+    .innerJoin(user, eq(consultations.doctorId, user.id))
+    .where(eq(consultations.patientId, userId))
+    .orderBy(desc(consultations.scheduledAt));
+
+  return consultationHistory;
+}
+
+export async function getPatientPrescriptions() {
+  const userId = await getUserId();
+
+  const patientPrescriptions = await db
+    .select({
+      id: prescriptions.id,
+      medications: prescriptions.medications,
+      instructions: prescriptions.instructions,
+      createdAt: prescriptions.createdAt,
+      consultationId: prescriptions.consultationId,
+      doctorName: user.name,
+      doctorSpecialty: user.specialty,
+      consultationDate: consultations.scheduledAt,
+    })
+    .from(prescriptions)
+    .innerJoin(user, eq(prescriptions.doctorId, user.id))
+    .innerJoin(
+      consultations,
+      eq(prescriptions.consultationId, consultations.id),
+    )
+    .where(eq(prescriptions.patientId, userId))
+    .orderBy(desc(prescriptions.createdAt));
+
+  return patientPrescriptions;
 }
