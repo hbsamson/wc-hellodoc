@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   Bot,
@@ -46,9 +47,14 @@ export function DashboardNav({ userName, userEmail, userType }: DashboardNavProp
     <aside className="group/sidebar z-50 border-b bg-background/95 backdrop-blur transition-all duration-200 lg:fixed lg:inset-y-0 lg:left-0 lg:w-20 lg:border-b-0 lg:border-r lg:hover:w-72 lg:focus-within:w-72">
       <div className="flex min-h-16 flex-wrap items-center justify-between gap-4 px-4 py-3 lg:h-full lg:flex-col lg:items-stretch lg:justify-start lg:overflow-hidden lg:p-4">
         <Link href="/dashboard" className="flex items-center gap-2 lg:mb-6 lg:h-10 lg:justify-start">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
-            <span className="font-bold text-primary-foreground">H</span>
-          </div>
+          <Image
+            src="/hellodoc.png"
+            alt="HelloDoc"
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 rounded-lg bg-foreground object-contain p-1"
+            priority
+          />
           <span className="text-2xl font-bold text-primary transition-opacity lg:opacity-0 lg:group-hover/sidebar:opacity-100 lg:group-focus-within/sidebar:opacity-100">
             HelloDoc
           </span>
@@ -116,9 +122,14 @@ export function PublicNav() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="font-bold text-primary-foreground">H</span>
-          </div>
+          <Image
+            src="/hellodoc.png"
+            alt="HelloDoc"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg bg-foreground object-contain p-1"
+            priority
+          />
           <span className="text-xl font-bold text-primary">HelloDoc</span>
         </Link>
         <div className="flex flex-wrap items-center justify-end gap-2">
