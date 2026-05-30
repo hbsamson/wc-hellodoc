@@ -1,50 +1,56 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth'
-import { getUserRole } from '@/app/actions/helpers'
-import { AuthTopBar, DashboardNav, PublicNav } from '@/app/dashboard/dashboard-nav'
-import { ThemeProvider } from '@/components/theme-provider'
-import './globals.css'
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { getUserRole } from "@/app/actions/helpers";
+import {
+  AuthTopBar,
+  DashboardNav,
+  PublicNav,
+} from "@/app/dashboard/dashboard-nav";
+import { ThemeProvider } from "@/components/theme-provider";
+import "./globals.css";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'HelloDoc - Telehealth Platform',
-  description: 'Connect with healthcare professionals online. Book consultations, get prescriptions, and access quality healthcare from home.',
-  generator: 'v0.app',
+  title: "HelloDoc - Telehealth Platform",
+  description:
+    "Connect with healthcare professionals online. Book consultations, get prescriptions, and access quality healthcare from home.",
+  generator: "v0.app",
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
+        url: "/icon-light-32x32.png",
+        media: "(prefers-color-scheme: light)",
       },
       {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
+        url: "/icon-dark-32x32.png",
+        media: "(prefers-color-scheme: dark)",
       },
       {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: "/icon.svg",
+        type: "image/svg+xml",
       },
     ],
-    apple: '/apple-icon.png',
+    apple: "/apple-icon.png",
   },
-}
+};
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userRole = session?.user ? await getUserRole() : null
-  const userType = userRole === 'doctor' ? 'doctor' : 'patient'
+  const session = await auth.api.getSession({ headers: await headers() });
+  const userRole = session?.user ? await getUserRole() : null;
+  const userType = userRole === "doctor" ? "doctor" : "patient";
 
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
+      <meta name="apple-mobile-web-app-title" content="HelloDoc" />
       <body className="font-sans antialiased bg-background">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           {session?.user ? (
@@ -57,8 +63,8 @@ export default async function RootLayout({
                 aria-hidden="true"
               />
               <AuthTopBar
-                userName={session.user.name || ''}
-                userEmail={session.user.email || ''}
+                userName={session.user.name || ""}
+                userEmail={session.user.email || ""}
                 userType={userType}
               />
               <DashboardNav
@@ -76,8 +82,8 @@ export default async function RootLayout({
             </>
           )}
         </ThemeProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
-  )
+  );
 }
