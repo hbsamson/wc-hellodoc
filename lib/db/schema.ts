@@ -118,6 +118,17 @@ export const patientProfileImages = pgTable('patient_profile_images', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 
+export const patientMedicalFiles = pgTable('patient_medical_files', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull(),
+  data: bytea('data').notNull(),
+  mimeType: text('mime_type').notNull(),
+  filename: text('filename').notNull(),
+  size: integer('size').notNull(),
+  description: text('description'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
+
 export const reviews = pgTable('reviews', {
   id: text('id').primaryKey(),
   doctorId: text('doctorId').notNull(),

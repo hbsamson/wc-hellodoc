@@ -104,6 +104,17 @@ CREATE TABLE IF NOT EXISTS "patient_profile_images" (
   "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "patient_medical_files" (
+  id TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  data BYTEA NOT NULL,
+  "mime_type" TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  description TEXT,
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS "reviews" (
   id TEXT PRIMARY KEY,
   "doctorId" TEXT NOT NULL,
@@ -124,6 +135,7 @@ CREATE INDEX IF NOT EXISTS idx_consultations_scheduled_at ON "consultations"("sc
 CREATE INDEX IF NOT EXISTS idx_prescriptions_patient_id ON "prescriptions"("patientId");
 CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor_id ON "prescriptions"("doctorId");
 CREATE INDEX IF NOT EXISTS idx_patient_profile_images_user_id ON "patient_profile_images"("userId");
+CREATE INDEX IF NOT EXISTS idx_patient_medical_files_user_id ON "patient_medical_files"("userId");
 CREATE INDEX IF NOT EXISTS idx_reviews_doctor_id ON "reviews"("doctorId");
 `
 

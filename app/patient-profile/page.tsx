@@ -1,7 +1,14 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import Link from 'next/link'
-import { ArrowLeft, Camera, HeartPulse, Phone, UserRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  Camera,
+  FileText,
+  HeartPulse,
+  Phone,
+  UserRound,
+} from 'lucide-react'
 import { auth } from '@/lib/auth'
 import {
   getPatientProfile,
@@ -108,6 +115,22 @@ export default async function PatientProfilePage({
       </nav>
 
       <main className="container mx-auto max-w-3xl px-4 py-10">
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-semibold">Medical History Files</h2>
+            <p className="text-sm text-muted-foreground">
+              Upload and review past prescriptions, lab results, and medical
+              records.
+            </p>
+          </div>
+          <Link href="/patient-medical-history">
+            <Button variant="outline" className="w-full sm:w-auto">
+              <FileText className="h-4 w-4" />
+              Medical History
+            </Button>
+          </Link>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>
