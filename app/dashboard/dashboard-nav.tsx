@@ -118,14 +118,18 @@ export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
           { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
           { label: "Schedule", href: "/consultations", icon: CalendarDays },
           { label: "Consultation", href: "/consultations", icon: VideoIcon },
-          { label: "Notes", href: "/consultations", icon: Stethoscope },
+          {
+            label: "Medical Records",
+            href: "/medical-records",
+            icon: Stethoscope,
+          },
           { label: "Notifications", href: "/notifications", icon: Bell },
           { label: "Profile", href: "/doctor-profile", icon: UserRound },
         ]
       : [
           { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
           { label: "Find Doctors", href: "/doctors", icon: Search },
-          { label: "AI Recommendation", href: "/doctors", icon: Bot },
+          // { label: "AI Recommendation", href: "/doctors", icon: Bot },
           { label: "Consultations", href: "/consultations", icon: VideoIcon },
           {
             label: "Medical Records",
