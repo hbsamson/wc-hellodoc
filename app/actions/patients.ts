@@ -1,39 +1,38 @@
-'use server'
+"use server";
 
-import { db } from '@/lib/db'
-import { patientProfileImages, user } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
-import { nanoid } from 'nanoid'
-import { getUserId } from './helpers'
+import { db } from "@/lib/db";
+import { user } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getUserId } from "./helpers";
 
 export type PatientProfileData = {
-  name: string
-  givenName: string
-  lastName: string
-  birthday?: string
-  weightKg?: string
-  heightCm?: string
-  image?: string
-  phoneNumber?: string
-  address?: string
-  emergencyContactName?: string
-  emergencyContactPhone?: string
-  medicalHistory?: string
-}
+  name: string;
+  givenName: string;
+  lastName: string;
+  birthday?: string;
+  weightKg?: string;
+  heightCm?: string;
+  image?: string;
+  phoneNumber?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  medicalHistory?: string;
+};
 
 export async function getPatientProfile(userId: string) {
   const profile = await db
     .select()
     .from(user)
     .where(eq(user.id, userId))
-    .limit(1)
+    .limit(1);
 
-  return profile[0] || null
+  return profile[0] || null;
 }
 
 export async function updatePatientProfile(data: PatientProfileData) {
-  const userId = await getUserId()
+  const userId = await getUserId();
 
   const updated = await db
     .update(user)
@@ -41,7 +40,7 @@ export async function updatePatientProfile(data: PatientProfileData) {
       name: data.name,
       givenName: data.givenName,
       lastName: data.lastName,
-      userType: 'patient',
+      userType: "patient",
       birthday: data.birthday,
       weightKg: data.weightKg,
       heightCm: data.heightCm,
@@ -54,45 +53,54 @@ export async function updatePatientProfile(data: PatientProfileData) {
       updatedAt: new Date(),
     })
     .where(eq(user.id, userId))
-    .returning()
+    .returning();
 
-  revalidatePath('/dashboard')
-  revalidatePath('/patient-profile')
+  revalidatePath("/dashboard");
+  revalidatePath("/patient-profile");
 
-  return updated[0] || null
+  return updated[0] || null;
 }
 
+import { cloudinary } from "@/lib/cloudinary";
+
 export async function savePatientProfileImage(file: File) {
-  const userId = await getUserId()
-  const id = nanoid()
-  const buffer = Buffer.from(await file.arrayBuffer())
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
 
-  await db.insert(patientProfileImages).values({
-    id,
-    userId,
-    data: buffer,
-    mimeType: file.type,
-    filename: file.name,
-    size: file.size,
-  })
+  const result = await new Promise<{ secure_url: string }>(
+    (resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "patient-profile-images",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error || !result) reject(error);
+            else resolve(result as { secure_url: string });
+          },
+        )
+        .end(buffer);
+    },
+  );
 
-  return `/api/patient-profile/image/${id}`
+  return result.secure_url;
 }
 
 export async function isPatientProfileComplete(profile: {
-  name: string | null
-  birthday: string | null
-  weightKg: string | null
-  heightCm: string | null
-  phoneNumber: string | null
-  medicalHistory: string | null
+  name: string | null;
+  birthday: string | null;
+  weightKg: string | null;
+  heightCm: string | null;
+  phoneNumber: string | null;
+  medicalHistory: string | null;
 }) {
   return Boolean(
     profile.name &&
-      profile.birthday &&
-      profile.weightKg &&
-      profile.heightCm &&
-      profile.phoneNumber &&
-      profile.medicalHistory,
-  )
+    profile.birthday &&
+    profile.weightKg &&
+    profile.heightCm &&
+    profile.phoneNumber &&
+    profile.medicalHistory,
+  );
 }
