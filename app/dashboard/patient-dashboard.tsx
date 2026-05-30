@@ -92,7 +92,7 @@ export function PatientDashboard({ userName, consultations }: PatientDashboardPr
   const firstUpcoming = upcomingConsultations[0]
 
   return (
-    <main className="container mx-auto px-4 py-10">
+    <main className="container mx-auto px-6 py-10 sm:px-8 lg:px-10">
       <section className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-wide text-primary">
@@ -126,18 +126,17 @@ export function PatientDashboard({ userName, consultations }: PatientDashboardPr
             <CardDescription>Search available providers and start doctor discovery.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <form action="/doctors" className="flex flex-col gap-3 sm:flex-row">
               <input
+                name="q"
                 placeholder="Search by specialty, symptom, or doctor name"
                 className="min-h-10 flex-1 rounded-md border bg-background px-3 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
               />
-              <Link href="/doctors">
-                <Button className="w-full gap-2 sm:w-auto">
-                  <Search className="h-4 w-4" />
-                  Search
-                </Button>
-              </Link>
-            </div>
+              <Button type="submit" className="w-full gap-2 sm:w-auto">
+                <Search className="h-4 w-4" />
+                Search
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </section>
