@@ -138,6 +138,32 @@ CREATE TABLE IF NOT EXISTS "reviews" (
   "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "recommendation_chats" (
+  id TEXT PRIMARY KEY,
+  "patientId" TEXT NOT NULL,
+  status TEXT DEFAULT 'active',
+  "message_count" INTEGER DEFAULT 0,
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "recommendation_messages" (
+  id TEXT PRIMARY KEY,
+  "chatId" TEXT NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "recommended_doctors" (
+  id TEXT PRIMARY KEY,
+  "chatId" TEXT NOT NULL,
+  "doctorId" TEXT NOT NULL,
+  "match_reason" TEXT,
+  rank INTEGER NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indices for better query performance
 CREATE INDEX IF NOT EXISTS idx_session_user_id ON "session"("userId");
 CREATE INDEX IF NOT EXISTS idx_account_user_id ON "account"("userId");
@@ -152,6 +178,10 @@ CREATE INDEX IF NOT EXISTS idx_patient_profile_images_user_id ON "patient_profil
 CREATE INDEX IF NOT EXISTS idx_patient_medical_files_user_id ON "patient_medical_files"("userId");
 CREATE INDEX IF NOT EXISTS idx_doctor_license_files_user_id ON "doctor_license_files"("userId");
 CREATE INDEX IF NOT EXISTS idx_reviews_doctor_id ON "reviews"("doctorId");
+CREATE INDEX IF NOT EXISTS idx_recommendation_chats_patient_id ON "recommendation_chats"("patientId");
+CREATE INDEX IF NOT EXISTS idx_recommendation_messages_chat_id ON "recommendation_messages"("chatId");
+CREATE INDEX IF NOT EXISTS idx_recommended_doctors_chat_id ON "recommended_doctors"("chatId");
+CREATE INDEX IF NOT EXISTS idx_recommended_doctors_doctor_id ON "recommended_doctors"("doctorId");
 `
 
 async function initDB() {

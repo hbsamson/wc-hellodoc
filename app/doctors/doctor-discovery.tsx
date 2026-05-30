@@ -9,6 +9,7 @@ import {
   Sparkles,
   Stethoscope,
   X,
+  Wand2,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { AIRecommendationModal } from '@/components/ai-recommendation-modal'
 
 export type DoctorDiscoveryItem = {
   id: string
@@ -91,6 +93,7 @@ export function DoctorDiscovery({ doctors, initialQuery = '' }: DoctorDiscoveryP
   const [query, setQuery] = useState(initialQuery)
   const [specialty, setSpecialty] = useState(allSpecialtiesValue)
   const [selectedNeed, setSelectedNeed] = useState<string | null>(null)
+  const [isRecommendationOpen, setIsRecommendationOpen] = useState(false)
 
   const specialties = useMemo(
     () =>
@@ -148,6 +151,11 @@ export function DoctorDiscovery({ doctors, initialQuery = '' }: DoctorDiscoveryP
 
   return (
     <div className="space-y-8">
+      <AIRecommendationModal
+        isOpen={isRecommendationOpen}
+        onClose={() => setIsRecommendationOpen(false)}
+      />
+
       <section className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
@@ -173,6 +181,15 @@ export function DoctorDiscovery({ doctors, initialQuery = '' }: DoctorDiscoveryP
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-2"
+            onClick={() => setIsRecommendationOpen(true)}
+          >
+            <Wand2 className="h-4 w-4" />
+            <span className="hidden sm:inline">AI Recommendation</span>
+          </Button>
           <Button type="button" variant="outline" className="h-11 gap-2" onClick={resetFilters}>
             <X className="h-4 w-4" />
             Clear

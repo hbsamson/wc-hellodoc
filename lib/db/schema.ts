@@ -151,3 +151,29 @@ export const reviews = pgTable('reviews', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
+
+export const recommendationChats = pgTable('recommendation_chats', {
+  id: text('id').primaryKey(),
+  patientId: text('patientId').notNull(),
+  status: text('status').notNull().default('active'), // active, completed
+  messageCount: integer('message_count').notNull().default(0),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+export const recommendationMessages = pgTable('recommendation_messages', {
+  id: text('id').primaryKey(),
+  chatId: text('chatId').notNull(),
+  role: text('role').notNull(), // patient, assistant
+  content: text('content').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
+
+export const recommendedDoctors = pgTable('recommended_doctors', {
+  id: text('id').primaryKey(),
+  chatId: text('chatId').notNull(),
+  doctorId: text('doctorId').notNull(),
+  matchReason: text('match_reason'),
+  rank: integer('rank').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
