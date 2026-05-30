@@ -52,6 +52,7 @@ export default async function RootLayout({
                 userName={session.user.name || ""}
                 userEmail={session.user.email || ""}
                 userType={userType}
+                image={session.user.image || null}
               />
               <DashboardNav
                 userType={userType}
