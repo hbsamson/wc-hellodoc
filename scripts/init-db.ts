@@ -12,6 +12,14 @@ CREATE TABLE IF NOT EXISTS "user" (
   email TEXT UNIQUE NOT NULL,
   "emailVerified" BOOLEAN DEFAULT FALSE,
   image TEXT,
+  birthday DATE,
+  "weight_kg" DECIMAL(5, 2),
+  "height_cm" DECIMAL(5, 2),
+  "phone_number" TEXT,
+  address TEXT,
+  "emergency_contact_name" TEXT,
+  "emergency_contact_phone" TEXT,
+  "medical_history" TEXT,
   specialty TEXT,
   bio TEXT,
   "license_number" TEXT,
@@ -86,6 +94,16 @@ CREATE TABLE IF NOT EXISTS "prescriptions" (
   "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "patient_profile_images" (
+  id TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  data BYTEA NOT NULL,
+  "mime_type" TEXT NOT NULL,
+  filename TEXT,
+  size INTEGER NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS "reviews" (
   id TEXT PRIMARY KEY,
   "doctorId" TEXT NOT NULL,
@@ -105,6 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_consultations_doctor_id ON "consultations"("docto
 CREATE INDEX IF NOT EXISTS idx_consultations_scheduled_at ON "consultations"("scheduledAt");
 CREATE INDEX IF NOT EXISTS idx_prescriptions_patient_id ON "prescriptions"("patientId");
 CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor_id ON "prescriptions"("doctorId");
+CREATE INDEX IF NOT EXISTS idx_patient_profile_images_user_id ON "patient_profile_images"("userId");
 CREATE INDEX IF NOT EXISTS idx_reviews_doctor_id ON "reviews"("doctorId");
 `
 

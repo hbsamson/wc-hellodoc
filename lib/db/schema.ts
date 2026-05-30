@@ -6,7 +6,15 @@ import {
   integer,
   decimal,
   time,
+  date,
+  customType,
 } from 'drizzle-orm/pg-core'
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea'
+  },
+})
 
 // --- Better Auth required tables -------------------------------------------
 // Column names are camelCase to match Better Auth's defaults. Do not rename.
@@ -17,6 +25,14 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: text('image'),
+  birthday: date('birthday'),
+  weightKg: decimal('weight_kg', { precision: 5, scale: 2 }),
+  heightCm: decimal('height_cm', { precision: 5, scale: 2 }),
+  phoneNumber: text('phone_number'),
+  address: text('address'),
+  emergencyContactName: text('emergency_contact_name'),
+  emergencyContactPhone: text('emergency_contact_phone'),
+  medicalHistory: text('medical_history'),
   specialty: text('specialty'),
   bio: text('bio'),
   licenseNumber: text('license_number'),
@@ -90,6 +106,16 @@ export const prescriptions = pgTable('prescriptions', {
   instructions: text('instructions'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+export const patientProfileImages = pgTable('patient_profile_images', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull(),
+  data: bytea('data').notNull(),
+  mimeType: text('mime_type').notNull(),
+  filename: text('filename'),
+  size: integer('size').notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 
 export const reviews = pgTable('reviews', {

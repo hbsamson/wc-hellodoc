@@ -40,8 +40,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         })
       }
 
-      // Redirect after successful auth
-      router.push('/dashboard')
+      router.push(mode === 'sign-up' ? '/patient-profile?onboarding=1' : '/dashboard')
       router.refresh()
     } catch (err) {
       setError(

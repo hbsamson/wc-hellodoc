@@ -4,9 +4,9 @@ import { headers } from 'next/headers'
 import { getPatientConsultations, getDoctorConsultations } from '@/app/actions/consultations'
 import { getDoctorProfile } from '@/app/actions/doctors'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { Calendar, Users, VideoIcon } from 'lucide-react'
+import { Calendar, UserRound, Users, VideoIcon } from 'lucide-react'
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -47,6 +47,11 @@ export default async function DashboardPage() {
             <Link href="/consultations">
               <Button variant="ghost">Consultations</Button>
             </Link>
+            {!isDoctor && (
+              <Link href="/patient-profile">
+                <Button variant="ghost">Patient Profile</Button>
+              </Link>
+            )}
             <form
               action={async () => {
                 'use server'
@@ -124,6 +129,27 @@ export default async function DashboardPage() {
               </Link>
             </CardContent>
           </Card>
+
+          {!isDoctor && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <UserRound className="w-5 h-5 text-accent" />
+                  Profile
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Keep your patient details ready for visits
+                </p>
+                <Link href="/patient-profile">
+                  <Button size="sm" variant="outline">
+                    Edit Patient Profile
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Upcoming Consultations */}

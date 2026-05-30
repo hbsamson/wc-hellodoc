@@ -7,7 +7,7 @@ import Link from 'next/link'
 export default async function SignUpPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (session?.user) {
-    redirect('/dashboard')
+    redirect('/patient-profile?onboarding=1')
   }
 
   return (
