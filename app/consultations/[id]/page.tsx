@@ -1,11 +1,28 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
-import { getConsultation, startConsultation } from '@/app/actions/consultations'
+import {
+  endConsultation,
+  getConsultationWorkspace,
+  saveConsultationNotes,
+  savePrescription,
+  startConsultation,
+} from '@/app/actions/consultations'
 import { ConsultationRoom } from '@/components/consultation-room'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ClipboardList, FileText, Pill, UserRound } from 'lucide-react'
 
 interface ConsultationDetailPageProps {
   params: Promise<{
@@ -13,37 +30,42 @@ interface ConsultationDetailPageProps {
   }>
 }
 
-export default async function ConsultationDetailPage({ params }: ConsultationDetailPageProps) {
+export default async function ConsultationDetailPage({
+  params,
+}: ConsultationDetailPageProps) {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
     redirect('/sign-in')
   }
 
   const { id } = await params
-  const consultation = await getConsultation(id)
-
-  const isDoctor = consultation.doctorId === session.user.id
-  const isPatient = consultation.patientId === session.user.id
+  const workspace = await getConsultationWorkspace(id)
+  const {
+    consultation,
+    patient,
+    doctor,
+    consultationHistory,
+    prescription,
+    isDoctor,
+    isPatient,
+  } = workspace
 
   if (!isDoctor && !isPatient) {
     redirect('/consultations')
   }
 
-  // If scheduled and doctor, allow starting the consultation
-  if (consultation.status === 'scheduled' && isDoctor) {
-    // Note: In a real app, you'd handle the start action properly
-    // For now, this is just for display
-  }
+  const roomName = `hellodoc-${consultation.id}`
+  const patientName = patient?.name || 'Patient'
+  const doctorName = doctor?.name || 'Doctor'
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Simple header with back button */}
-      <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-4">
             <Link href="/consultations">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
             </Link>
@@ -54,77 +76,366 @@ export default async function ConsultationDetailPage({ params }: ConsultationDet
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-medium capitalized">
-              Status: <span className="text-primary">{consultation.status}</span>
-            </p>
-          </div>
+          <Badge variant={consultation.status === 'in-progress' ? 'default' : 'secondary'}>
+            {consultation.status}
+          </Badge>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         {consultation.status === 'scheduled' ? (
-          <div>
-            {isDoctor ? (
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-muted rounded-lg p-8 text-center mb-6">
-                  <p className="text-lg mb-4">Ready to start the consultation?</p>
-                  <form
-                    action={async () => {
-                      'use server'
-                      await startConsultation(id)
-                      redirect(`/consultations/${id}`)
-                    }}
-                  >
-                    <Button size="lg" type="submit">
-                      Start Consultation
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-2xl mx-auto bg-muted rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">
-                  Waiting for the doctor to start the consultation...
-                </p>
-              </div>
-            )}
-          </div>
+          <WaitingRoom
+            consultationId={id}
+            isDoctor={isDoctor}
+            patientName={patientName}
+            doctorName={doctorName}
+          />
         ) : consultation.status === 'in-progress' ? (
-          <div className="h-[600px] rounded-lg overflow-hidden">
-            <ConsultationRoom
-              consultationId={id}
-              isDoctor={isDoctor}
-              onEnd={() => {
-                redirect('/consultations')
-              }}
-            />
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+            <ConsultationRoom consultationId={id} roomName={roomName} />
+            {isDoctor ? (
+              <DoctorWorkspace
+                consultationId={id}
+                patient={patient}
+                history={consultationHistory}
+                notes={consultation.notes || ''}
+                prescription={prescription}
+              />
+            ) : (
+              <PatientSessionPanel doctorName={doctorName} prescription={prescription} />
+            )}
           </div>
         ) : consultation.status === 'completed' ? (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-              <p className="text-green-700 font-semibold mb-2">Consultation Completed</p>
-              {consultation.endedAt && (
-                <p className="text-sm text-green-600">
-                  Ended on {new Date(consultation.endedAt).toLocaleString()}
-                </p>
+          <CompletedSummary
+            endedAt={consultation.endedAt}
+            notes={consultation.notes}
+            prescription={prescription}
+          />
+        ) : consultation.status === 'cancelled' ? (
+          <Card className="mx-auto max-w-2xl border-red-200 bg-red-50">
+            <CardContent className="py-10 text-center">
+              <p className="font-semibold text-red-700">Consultation Cancelled</p>
+            </CardContent>
+          </Card>
+        ) : null}
+      </main>
+    </div>
+  )
+}
+
+function WaitingRoom({
+  consultationId,
+  isDoctor,
+  patientName,
+  doctorName,
+}: {
+  consultationId: string
+  isDoctor: boolean
+  patientName: string
+  doctorName: string
+}) {
+  return (
+    <Card className="mx-auto max-w-2xl">
+      <CardHeader className="text-center">
+        <CardTitle>{isDoctor ? 'Patient is in the waiting room' : 'Waiting room'}</CardTitle>
+        <CardDescription>
+          {isDoctor
+            ? `${patientName} can join once you start the session.`
+            : `${doctorName} will let you in when the consultation is ready.`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex justify-center pb-8">
+        {isDoctor ? (
+          <form
+            action={async () => {
+              'use server'
+              await startConsultation(consultationId)
+              redirect(`/consultations/${consultationId}`)
+            }}
+          >
+            <Button size="lg" type="submit">
+              Let Patient In
+            </Button>
+          </form>
+        ) : (
+          <div className="rounded-md bg-muted px-4 py-3 text-sm text-muted-foreground">
+            Keep this page open. Refresh if your doctor has started the session.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function DoctorWorkspace({
+  consultationId,
+  patient,
+  history,
+  notes,
+  prescription,
+}: {
+  consultationId: string
+  patient: {
+    name: string | null
+    email: string
+    birthday: string | null
+    weightKg: string | null
+    heightCm: string | null
+    phoneNumber: string | null
+    address: string | null
+    emergencyContactName: string | null
+    emergencyContactPhone: string | null
+    medicalHistory: string | null
+  } | null
+  history: {
+    id: string
+    status: string
+    scheduledAt: Date
+    endedAt: Date | null
+    notes: string | null
+  }[]
+  notes: string
+  prescription: {
+    medications: string
+    instructions: string | null
+  } | null
+}) {
+  return (
+    <aside className="grid gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <UserRound className="h-5 w-5 text-primary" />
+            Patient profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 text-sm">
+          <Info label="Name" value={patient?.name} />
+          <Info label="Email" value={patient?.email} />
+          <Info label="Birthday" value={patient?.birthday} />
+          <Info label="Weight" value={patient?.weightKg ? `${patient.weightKg} kg` : null} />
+          <Info label="Height" value={patient?.heightCm ? `${patient.heightCm} cm` : null} />
+          <Info label="Phone" value={patient?.phoneNumber} />
+          <Info label="Address" value={patient?.address} />
+          <Info
+            label="Emergency"
+            value={
+              patient?.emergencyContactName || patient?.emergencyContactPhone
+                ? `${patient.emergencyContactName || ''} ${patient.emergencyContactPhone || ''}`.trim()
+                : null
+            }
+          />
+          <Info label="Medical history" value={patient?.medicalHistory} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ClipboardList className="h-5 w-5 text-primary" />
+            Session notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="grid gap-3"
+            action={async (formData) => {
+              'use server'
+              await saveConsultationNotes(
+                consultationId,
+                String(formData.get('notes') || ''),
+              )
+            }}
+          >
+            <Textarea
+              name="notes"
+              defaultValue={notes}
+              rows={6}
+              placeholder="Assessment, findings, care plan..."
+            />
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="submit" variant="outline">
+                Save Notes
+              </Button>
+              <Button
+                type="submit"
+                formAction={async (formData) => {
+                  'use server'
+                  await endConsultation(
+                    consultationId,
+                    String(formData.get('notes') || ''),
+                  )
+                  redirect(`/consultations/${consultationId}`)
+                }}
+              >
+                End Session
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Pill className="h-5 w-5 text-primary" />
+            Prescription
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="grid gap-3"
+            action={async (formData) => {
+              'use server'
+              await savePrescription(consultationId, {
+                medications: String(formData.get('medications') || ''),
+                instructions: String(formData.get('instructions') || ''),
+              })
+            }}
+          >
+            <div className="grid gap-2">
+              <Label htmlFor="medications">Medication</Label>
+              <Textarea
+                id="medications"
+                name="medications"
+                defaultValue={prescription?.medications || ''}
+                rows={4}
+                placeholder="Medicine, dosage, frequency, duration"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="instructions">Instructions</Label>
+              <Input
+                id="instructions"
+                name="instructions"
+                defaultValue={prescription?.instructions || ''}
+                placeholder="After meals, follow-up reminders..."
+              />
+            </div>
+            <Button type="submit">Generate Prescription</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FileText className="h-5 w-5 text-primary" />
+            Consultation history
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {history.map((item) => (
+            <div key={item.id} className="rounded-md border p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">
+                  {new Date(item.scheduledAt).toLocaleDateString()}
+                </span>
+                <Badge variant="secondary">{item.status}</Badge>
+              </div>
+              {item.notes && (
+                <p className="mt-2 line-clamp-3 text-muted-foreground">{item.notes}</p>
               )}
             </div>
+          ))}
+        </CardContent>
+      </Card>
+    </aside>
+  )
+}
 
-            {consultation.notes && (
-              <div className="bg-background border rounded-lg p-6">
-                <h3 className="font-semibold mb-2">Doctor&apos;s Notes</h3>
-                <p className="text-muted-foreground">{consultation.notes}</p>
-              </div>
+function PatientSessionPanel({
+  doctorName,
+  prescription,
+}: {
+  doctorName: string
+  prescription: {
+    medications: string
+    instructions: string | null
+  } | null
+}) {
+  return (
+    <aside className="grid content-start gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Session details</CardTitle>
+          <CardDescription>{doctorName} is connected to this consultation.</CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Your doctor may add notes and prescriptions during or after the visit.
+        </CardContent>
+      </Card>
+      {prescription && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Prescription</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm">
+            <p>{prescription.medications}</p>
+            {prescription.instructions && (
+              <p className="text-muted-foreground">{prescription.instructions}</p>
             )}
-          </div>
-        ) : consultation.status === 'cancelled' ? (
-          <div className="max-w-2xl mx-auto bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-700 font-semibold">Consultation Cancelled</p>
-          </div>
-        ) : null}
-      </div>
+          </CardContent>
+        </Card>
+      )}
+    </aside>
+  )
+}
+
+function CompletedSummary({
+  endedAt,
+  notes,
+  prescription,
+}: {
+  endedAt: Date | null
+  notes: string | null
+  prescription: {
+    medications: string
+    instructions: string | null
+  } | null
+}) {
+  return (
+    <div className="mx-auto grid max-w-2xl gap-4">
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="py-6">
+          <p className="font-semibold text-green-700">Consultation Completed</p>
+          {endedAt && (
+            <p className="mt-1 text-sm text-green-700">
+              Ended on {new Date(endedAt).toLocaleString()}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+      {notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Doctor notes</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">{notes}</CardContent>
+        </Card>
+      )}
+      {prescription && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Prescription</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm">
+            <p>{prescription.medications}</p>
+            {prescription.instructions && (
+              <p className="text-muted-foreground">{prescription.instructions}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function Info({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
+      <p className="whitespace-pre-wrap">{value || 'Not provided'}</p>
     </div>
   )
 }

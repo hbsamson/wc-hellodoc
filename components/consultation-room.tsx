@@ -1,191 +1,47 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import SimplePeer from 'simple-peer'
+import { ExternalLink, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react'
 
 interface ConsultationRoomProps {
   consultationId: string
-  isDoctor: boolean
-  onEnd?: () => void
+  roomName: string
 }
 
 export function ConsultationRoom({
   consultationId,
-  isDoctor,
-  onEnd,
+  roomName,
 }: ConsultationRoomProps) {
-  const [peer, setPeer] = useState<SimplePeer.Instance | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOff, setIsVideoOff] = useState(false)
-  const localVideoRef = useRef<HTMLVideoElement>(null)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null)
-  const localStreamRef = useRef<MediaStream | null>(null)
-
-  useEffect(() => {
-    const initPeer = async () => {
-      try {
-        // Get local media stream
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        })
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream
-        }
-        localStreamRef.current = stream
-
-        // Create peer connection
-        const newPeer = new SimplePeer({
-          initiator: isDoctor, // Doctor initiates the call
-          trickleICE: false,
-          stream: stream,
-          config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-            ],
-          },
-        })
-
-        newPeer.on('signal', (data) => {
-          // Send signal data through WebSocket or API
-          console.log('Signal:', data)
-        })
-
-        newPeer.on('connect', () => {
-          setIsConnected(true)
-        })
-
-        newPeer.on('stream', (stream) => {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = stream
-          }
-        })
-
-        newPeer.on('error', (err) => {
-          console.error('Peer error:', err)
-        })
-
-        setPeer(newPeer)
-      } catch (error) {
-        console.error('Failed to initialize peer:', error)
-      }
-    }
-
-    initPeer()
-
-    return () => {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => track.stop())
-      }
-      if (peer) {
-        peer.destroy()
-      }
-    }
-  }, [isDoctor])
-
-  const toggleMute = () => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getAudioTracks().forEach((track) => {
-        track.enabled = isMuted
-      })
-      setIsMuted(!isMuted)
-    }
-  }
-
-  const toggleVideo = () => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getVideoTracks().forEach((track) => {
-        track.enabled = isVideoOff
-      })
-      setIsVideoOff(!isVideoOff)
-    }
-  }
-
-  const handleEndCall = () => {
-    if (peer) {
-      peer.destroy()
-    }
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop())
-    }
-    onEnd?.()
-  }
+  const encodedRoomName = encodeURIComponent(roomName)
+  const roomUrl = `https://meet.jit.si/${encodedRoomName}#config.prejoinPageEnabled=true&config.startWithAudioMuted=true&config.startWithVideoMuted=true`
 
   return (
-    <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-      {/* Remote video */}
-      <video
-        ref={remoteVideoRef}
-        autoPlay
-        playsInline
-        className="w-full h-full object-cover"
+    <div className="flex h-full min-h-[560px] flex-col overflow-hidden rounded-md border bg-background">
+      <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Video className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="font-semibold">Virtual consultation room</p>
+            <p className="text-sm text-muted-foreground">
+              Session {consultationId.slice(0, 8)}
+            </p>
+          </div>
+        </div>
+        <a href={roomUrl} target="_blank" rel="noreferrer">
+          <Button variant="outline" className="w-full gap-2 sm:w-auto">
+            <ExternalLink className="h-4 w-4" />
+            Open Room
+          </Button>
+        </a>
+      </div>
+      <iframe
+        title="Embedded consultation video room"
+        src={roomUrl}
+        allow="camera; microphone; fullscreen; display-capture; autoplay"
+        className="h-full min-h-[500px] w-full flex-1 border-0"
       />
-
-      {/* Local video (picture-in-picture) */}
-      <div className="absolute bottom-4 right-4 w-32 h-32 bg-gray-900 rounded-lg overflow-hidden border-2 border-primary">
-        <video
-          ref={localVideoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover transform scale-x-[-1]"
-        />
-      </div>
-
-      {/* Controls */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-4">
-        <Button
-          size="lg"
-          variant={isMuted ? 'destructive' : 'default'}
-          onClick={toggleMute}
-          className="rounded-full w-14 h-14 p-0"
-        >
-          {isMuted ? (
-            <MicOff className="w-6 h-6" />
-          ) : (
-            <Mic className="w-6 h-6" />
-          )}
-        </Button>
-
-        <Button
-          size="lg"
-          variant={isVideoOff ? 'destructive' : 'default'}
-          onClick={toggleVideo}
-          className="rounded-full w-14 h-14 p-0"
-        >
-          {isVideoOff ? (
-            <VideoOff className="w-6 h-6" />
-          ) : (
-            <Video className="w-6 h-6" />
-          )}
-        </Button>
-
-        <Button
-          size="lg"
-          variant="destructive"
-          onClick={handleEndCall}
-          className="rounded-full w-14 h-14 p-0"
-        >
-          <PhoneOff className="w-6 h-6" />
-        </Button>
-      </div>
-
-      {/* Connection status */}
-      {!isConnected && (
-        <div className="absolute top-4 left-4 bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm">
-          Connecting...
-        </div>
-      )}
-      {isConnected && (
-        <div className="absolute top-4 left-4 bg-green-500 text-white px-4 py-2 rounded-lg text-sm">
-          Connected
-        </div>
-      )}
     </div>
   )
 }
