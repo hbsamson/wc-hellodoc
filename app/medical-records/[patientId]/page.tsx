@@ -57,8 +57,10 @@ function formatDateTime(value: string | Date) {
 export default async function PatientMedicalRecordsPage({
   params,
 }: {
-  params: { patientId: string };
+  params: Promise<{ patientId: string }>;
 }) {
+  const { patientId } = await params;
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
     redirect("/sign-in");
@@ -69,16 +71,17 @@ export default async function PatientMedicalRecordsPage({
     redirect("/dashboard");
   }
 
-  const patientData = await getDoctorPatientMedicalRecords(params.patientId);
+  const patientData = await getDoctorPatientMedicalRecords(patientId);
   if (!patientData) {
     redirect("/medical-records");
   }
 
-  const consultationHistory = await getDoctorPatientConsultationHistory(
-    params.patientId,
-  );
-  const medicalFiles = await getDoctorPatientMedicalFiles(params.patientId);
-  const prescriptions = await getDoctorPatientPrescriptions(params.patientId);
+  const consultationHistory =
+    await getDoctorPatientConsultationHistory(patientId);
+
+  const medicalFiles = await getDoctorPatientMedicalFiles(patientId);
+
+  const prescriptions = await getDoctorPatientPrescriptions(patientId);
 
   return (
     <div className="min-h-screen">

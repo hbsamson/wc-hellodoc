@@ -43,18 +43,23 @@ export default async function MedicalRecordsPage() {
   }
 
   const consultations = await getDoctorConsultations();
-
   const uniquePatients = new Map();
+
   consultations.forEach((consultation) => {
+    const patientName = consultation.patientName || "Unknown Patient";
+
     if (!uniquePatients.has(consultation.patientId)) {
       uniquePatients.set(consultation.patientId, {
         patientId: consultation.patientId,
+        patientName,
         consultationCount: 0,
         lastConsultation: consultation.scheduledAt,
       });
     }
+
     const patient = uniquePatients.get(consultation.patientId);
     patient.consultationCount += 1;
+
     if (
       new Date(consultation.scheduledAt) > new Date(patient.lastConsultation)
     ) {
@@ -105,31 +110,39 @@ export default async function MedicalRecordsPage() {
               ) : (
                 <div className="space-y-3">
                   {patients.map((patient) => (
-                    <Link
+                    <Card
                       key={patient.patientId}
-                      href={`/medical-records/${patient.patientId}`}
+                      className="transition-colors hover:border-primary"
                     >
-                      <Card className="transition-colors hover:border-primary">
-                        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex min-w-0 gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                              <Users className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate font-medium">
-                                Patient ID: {patient.patientId}
-                              </p>
-                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  Last: {formatDate(patient.lastConsultation)}
-                                </span>
-                                <span>
-                                  {patient.consultationCount} consultation(s)
-                                </span>
-                              </div>
+                      <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                            <Users className="h-5 w-5 text-primary" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">
+                              {patient.patientName}
+                            </p>
+
+                            <p className="truncate text-xs text-muted-foreground">
+                              ID: {patient.patientId}
+                            </p>
+
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Last: {formatDate(patient.lastConsultation)}
+                              </span>
+
+                              <span>
+                                {patient.consultationCount} consultation(s)
+                              </span>
                             </div>
                           </div>
+                        </div>
+
+                        <Link href={`/medical-records/${patient.patientId}`}>
                           <Button
                             variant="outline"
                             size="sm"
@@ -137,9 +150,9 @@ export default async function MedicalRecordsPage() {
                           >
                             View Records
                           </Button>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                        </Link>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
