@@ -1,72 +1,83 @@
-import Image from 'next/image'
-import Link from 'next/link'
+import Image from "next/image";
+import Link from "next/link";
 import {
   CalendarDays,
   FileSearch,
   NotebookPen,
   UserCog,
   VideoIcon,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type Consultation = {
-  id: string
-  status: string
-  scheduledAt: string | Date
-  endedAt?: string | Date | null
-  notes?: string | null
-}
+  id: string;
+  status: string;
+  scheduledAt: string | Date;
+  endedAt?: string | Date | null;
+  notes?: string | null;
+};
 
 type DoctorDashboardProps = {
-  userName: string
-  consultations: Consultation[]
-}
+  userName: string;
+  consultations: Consultation[];
+};
 
 const doctorFeatures = [
   {
-    title: 'Medical Records Access',
-    description: 'Review patient context and uploaded medical history for consultations.',
-    href: '/consultations',
-    action: 'Review Records',
+    title: "Medical Records Access",
+    description:
+      "Review patient context and uploaded medical history for consultations.",
+    href: "/medical-records",
+    action: "Review Records",
     icon: FileSearch,
   },
   {
-    title: 'Consultation Schedule Management',
-    description: 'Track upcoming, active, completed, and cancelled consultations.',
-    href: '/consultations',
-    action: 'Manage Schedule',
+    title: "Consultation Schedule Management",
+    description:
+      "Track upcoming, active, completed, and cancelled consultations.",
+    href: "/consultations",
+    action: "Manage Schedule",
     icon: CalendarDays,
   },
   {
-    title: 'Consultation Notes & Prescriptions',
-    description: 'Document care notes and prepare prescriptions after visits.',
-    href: '/consultations',
-    action: 'Open Notes',
+    title: "Consultation Notes & Prescriptions",
+    description: "Document care notes and prepare prescriptions after visits.",
+    href: "/consultations",
+    action: "Open Notes",
     icon: NotebookPen,
   },
   {
-    title: 'Consultation Session',
-    description: 'Start or join scheduled video consultations with patients.',
-    href: '/consultations',
-    action: 'Open Sessions',
+    title: "Consultation Session",
+    description: "Start or join scheduled video consultations with patients.",
+    href: "/consultations",
+    action: "Open Sessions",
     icon: VideoIcon,
   },
-]
+];
 
-export function DoctorDashboard({ userName, consultations }: DoctorDashboardProps) {
+export function DoctorDashboard({
+  userName,
+  consultations,
+}: DoctorDashboardProps) {
   const upcomingConsultations = consultations.filter(
     (consultation) =>
-      consultation.status === 'scheduled' &&
+      consultation.status === "scheduled" &&
       new Date(consultation.scheduledAt) > new Date(),
-  )
+  );
   const activeConsultations = consultations.filter(
-    (consultation) => consultation.status === 'in-progress',
-  )
+    (consultation) => consultation.status === "in-progress",
+  );
   const completedConsultations = consultations.filter(
-    (consultation) => consultation.status === 'completed',
-  )
-  const scheduleItems = [...activeConsultations, ...upcomingConsultations]
+    (consultation) => consultation.status === "completed",
+  );
+  const scheduleItems = [...activeConsultations, ...upcomingConsultations];
 
   return (
     <main className="container mx-auto px-4 py-10">
@@ -87,7 +98,10 @@ export function DoctorDashboard({ userName, consultations }: DoctorDashboardProp
             </div>
             <div className="mt-5">
               <Link href="/doctor-profile">
-                <Button variant="outline" className="gap-2 bg-white/80 dark:bg-background/80">
+                <Button
+                  variant="outline"
+                  className="gap-2 bg-white/80 dark:bg-background/80"
+                >
                   <UserCog className="h-4 w-4" />
                   Edit Profile
                 </Button>
@@ -112,9 +126,21 @@ export function DoctorDashboard({ userName, consultations }: DoctorDashboardProp
       </section>
 
       <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <SummaryCard title="Active" value={activeConsultations.length} label="Live consultations" />
-        <SummaryCard title="Upcoming" value={upcomingConsultations.length} label="Scheduled visits" />
-        <SummaryCard title="Completed" value={completedConsultations.length} label="Finished visits" />
+        <SummaryCard
+          title="Active"
+          value={activeConsultations.length}
+          label="Live consultations"
+        />
+        <SummaryCard
+          title="Upcoming"
+          value={upcomingConsultations.length}
+          label="Scheduled visits"
+        />
+        <SummaryCard
+          title="Completed"
+          value={completedConsultations.length}
+          label="Finished visits"
+        />
         <SummaryCard title="Availability" value="Open" label="Profile status" />
       </section>
 
@@ -128,12 +154,16 @@ export function DoctorDashboard({ userName, consultations }: DoctorDashboardProp
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Schedule</CardTitle>
-            <CardDescription>Active and scheduled consultations that need attention.</CardDescription>
+            <CardDescription>
+              Active and scheduled consultations that need attention.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {scheduleItems.length === 0 ? (
               <div className="py-10 text-center">
-                <p className="text-muted-foreground">No scheduled consultations right now.</p>
+                <p className="text-muted-foreground">
+                  No scheduled consultations right now.
+                </p>
               </div>
             ) : (
               <div className="grid gap-4">
@@ -143,15 +173,23 @@ export function DoctorDashboard({ userName, consultations }: DoctorDashboardProp
                     className="flex flex-col gap-4 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
-                      <p className="font-semibold capitalize">{consultation.status}</p>
+                      <p className="font-semibold capitalize">
+                        {consultation.status}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(consultation.scheduledAt).toLocaleDateString()}{' '}
-                        {new Date(consultation.scheduledAt).toLocaleTimeString()}
+                        {new Date(
+                          consultation.scheduledAt,
+                        ).toLocaleDateString()}{" "}
+                        {new Date(
+                          consultation.scheduledAt,
+                        ).toLocaleTimeString()}
                       </p>
                     </div>
                     <Link href={`/consultations/${consultation.id}`}>
                       <Button>
-                        {consultation.status === 'in-progress' ? 'Join Session' : 'View Details'}
+                        {consultation.status === "in-progress"
+                          ? "Join Session"
+                          : "View Details"}
                       </Button>
                     </Link>
                   </div>
@@ -164,7 +202,7 @@ export function DoctorDashboard({ userName, consultations }: DoctorDashboardProp
         <MiniCalendar />
       </section>
     </main>
-  )
+  );
 }
 
 function SummaryCard({
@@ -172,9 +210,9 @@ function SummaryCard({
   value,
   label,
 }: {
-  title: string
-  value: number | string
-  label: string
+  title: string;
+  value: number | string;
+  label: string;
 }) {
   return (
     <Card>
@@ -184,7 +222,7 @@ function SummaryCard({
         <p className="mt-1 text-sm text-muted-foreground">{label}</p>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function FeatureCard({
@@ -209,17 +247,17 @@ function FeatureCard({
         </Link>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function MiniCalendar() {
   const dates = [
-    ['1', '2', '3', '4', '5', '6', '7'],
-    ['8', '9', '10', '11', '12', '13', '14'],
-    ['15', '16', '17', '18', '19', '20', '21'],
-    ['22', '23', '24', '25', '26', '27', '28'],
-    ['29', '30', '31', '1', '2', '3', '4'],
-  ]
+    ["1", "2", "3", "4", "5", "6", "7"],
+    ["8", "9", "10", "11", "12", "13", "14"],
+    ["15", "16", "17", "18", "19", "20", "21"],
+    ["22", "23", "24", "25", "26", "27", "28"],
+    ["29", "30", "31", "1", "2", "3", "4"],
+  ];
 
   return (
     <Card>
@@ -229,22 +267,25 @@ function MiniCalendar() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-7 border-b pb-2 text-center text-[10px] text-muted-foreground">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <span key={day}>{day}</span>
           ))}
         </div>
         <div className="grid gap-y-4 pt-4">
           {dates.map((week, index) => (
-            <div key={index} className="grid grid-cols-7 text-center text-sm font-medium">
+            <div
+              key={index}
+              className="grid grid-cols-7 text-center text-sm font-medium"
+            >
               {week.map((date, dateIndex) => (
                 <span
                   key={`${index}-${dateIndex}`}
                   className={
                     dateIndex === 6
-                      ? 'text-destructive'
+                      ? "text-destructive"
                       : index === 4 && dateIndex > 2
-                        ? 'text-muted-foreground'
-                        : ''
+                        ? "text-muted-foreground"
+                        : ""
                   }
                 >
                   {date}
@@ -255,5 +296,5 @@ function MiniCalendar() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

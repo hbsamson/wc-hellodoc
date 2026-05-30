@@ -118,3 +118,93 @@ export async function getPatientPrescriptions() {
 
   return patientPrescriptions;
 }
+
+export async function getDoctorPatientMedicalRecords(patientId: string) {
+  const doctorId = await getUserId();
+
+  const patientData = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      birthday: user.birthday,
+      weightKg: user.weightKg,
+      heightCm: user.heightCm,
+      phoneNumber: user.phoneNumber,
+      address: user.address,
+      emergencyContactName: user.emergencyContactName,
+      emergencyContactPhone: user.emergencyContactPhone,
+      medicalHistory: user.medicalHistory,
+    })
+    .from(user)
+    .where(eq(user.id, patientId))
+    .limit(1);
+
+  return patientData[0] || null;
+}
+
+export async function getDoctorPatientConsultationHistory(patientId: string) {
+  const doctorId = await getUserId();
+
+  const consultationHistory = await db
+    .select({
+      id: consultations.id,
+      status: consultations.status,
+      scheduledAt: consultations.scheduledAt,
+      startedAt: consultations.startedAt,
+      endedAt: consultations.endedAt,
+      notes: consultations.notes,
+      patientId: consultations.patientId,
+    })
+    .from(consultations)
+    .where(eq(consultations.patientId, patientId))
+    .orderBy(desc(consultations.scheduledAt));
+
+  return consultationHistory;
+}
+
+export async function getDoctorPatientMedicalFiles(patientId: string) {
+  const doctorId = await getUserId();
+
+  const medicalFiles = await db
+    .select({
+      id: patientMedicalFiles.id,
+      filename: patientMedicalFiles.filename,
+      mimeType: patientMedicalFiles.mimeType,
+      size: patientMedicalFiles.size,
+      url: patientMedicalFiles.url,
+      description: patientMedicalFiles.description,
+      createdAt: patientMedicalFiles.createdAt,
+    })
+    .from(patientMedicalFiles)
+    .where(eq(patientMedicalFiles.userId, patientId))
+    .orderBy(desc(patientMedicalFiles.createdAt));
+
+  return medicalFiles;
+}
+
+export async function getDoctorPatientPrescriptions(patientId: string) {
+  const doctorId = await getUserId();
+
+  const patientPrescriptions = await db
+    .select({
+      id: prescriptions.id,
+      medications: prescriptions.medications,
+      instructions: prescriptions.instructions,
+      createdAt: prescriptions.createdAt,
+      updatedAt: prescriptions.updatedAt,
+      consultationId: prescriptions.consultationId,
+      doctorName: user.name,
+      consultationDate: consultations.scheduledAt,
+    })
+    .from(prescriptions)
+    .innerJoin(user, eq(prescriptions.doctorId, user.id))
+    .innerJoin(
+      consultations,
+      eq(prescriptions.consultationId, consultations.id),
+    )
+    .where(eq(prescriptions.patientId, patientId))
+    .orderBy(desc(prescriptions.createdAt));
+
+  return patientPrescriptions;
+}
