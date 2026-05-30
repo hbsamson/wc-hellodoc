@@ -12,22 +12,28 @@ export async function updateCurrentUserIdentity(data: {
   lastName: string
   userType: UserType
 }) {
-  const userId = await getUserId()
-  const givenName = data.givenName.trim()
-  const lastName = data.lastName.trim()
+  try {
+    const userId = await getUserId()
+    const givenName = data.givenName.trim()
+    const lastName = data.lastName.trim()
 
-  if (!givenName || !lastName) {
-    throw new Error('Given name and last name are required')
+    if (!givenName || !lastName) {
+      return { error: 'Given name and last name are required' }
+    }
+
+    await db
+      .update(user)
+      .set({
+        givenName,
+        lastName,
+        name: [givenName, lastName].filter(Boolean).join(' '),
+        userType: data.userType,
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, userId))
+
+    return { error: null }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Failed to update user identity' }
   }
-
-  await db
-    .update(user)
-    .set({
-      givenName,
-      lastName,
-      name: [givenName, lastName].filter(Boolean).join(' '),
-      userType: data.userType,
-      updatedAt: new Date(),
-    })
-    .where(eq(user.id, userId))
 }

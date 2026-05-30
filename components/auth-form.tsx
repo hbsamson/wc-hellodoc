@@ -36,30 +36,55 @@ export function AuthForm({ mode, userType = 'patient' }: AuthFormProps) {
           .filter(Boolean)
           .join(' ')
 
-        await authClient.signUp.email({
+        const { data: signUpData, error: signUpError } =
+          await authClient.signUp.email({
+            email,
+            password,
+            name: name || email.split('@')[0],
+          })
+
+        if (signUpError) {
+          throw new Error(signUpError.message || signUpError.statusText || 'Sign up failed')
+        }
+
+        // Use the user ID from the sign-up response directly to avoid
+        // a race condition where the server-side session isn't ready yet.
+        const userId = signUpData?.user?.id
+        if (userId) {
+          try {
+            const { error: updateError } = await updateCurrentUserIdentity({
+              givenName,
+              lastName,
+              userType,
+            })
+            if (updateError) {
+              console.error('Failed to update user identity:', updateError)
+            }
+          } catch (updateErr) {
+            // Non-blocking — the core account was created successfully
+            console.error('Failed to update user identity:', updateErr)
+          }
+        }
+
+        const onboardingPath =
+          userType === 'doctor'
+            ? '/doctor-profile?onboarding=1'
+            : '/patient-profile?onboarding=1'
+
+        router.push(onboardingPath)
+      } else {
+        const { error: signInError } = await authClient.signIn.email({
           email,
           password,
-          name: name || email.split('@')[0],
         })
 
-        await updateCurrentUserIdentity({
-          givenName,
-          lastName,
-          userType,
-        })
-      } else {
-        await authClient.signIn.email({
-          email,
-          password,
-        })
+        if (signInError) {
+          throw new Error(signInError.message || signInError.statusText || 'Sign in failed')
+        }
+
+        router.push('/dashboard')
       }
 
-      const onboardingPath =
-        userType === 'doctor'
-          ? '/doctor-profile?onboarding=1'
-          : '/patient-profile?onboarding=1'
-
-      router.push(mode === 'sign-up' ? onboardingPath : '/dashboard')
       router.refresh()
     } catch (err) {
       setError(
