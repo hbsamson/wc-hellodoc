@@ -7,7 +7,7 @@ import {
   isThirtyMinuteBlock,
   isWithinDoctorAvailability,
 } from '@/lib/consultation-scheduling'
-import { eq, and, desc, gte, inArray, isNotNull, lt, or } from 'drizzle-orm'
+import { eq, and, desc, gte, inArray, isNotNull, lt, ne, or } from 'drizzle-orm'
 import { getUserId } from './helpers'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
@@ -180,6 +180,9 @@ export async function getConsultationWorkspace(consultationId: string) {
       id: user.id,
       name: user.name,
       specialty: user.specialty,
+      isAvailable: user.isAvailable,
+      availableFrom: user.availableFrom,
+      availableUntil: user.availableUntil,
     })
     .from(user)
     .where(eq(user.id, consultation.doctorId))
@@ -359,6 +362,101 @@ export async function cancelConsultation(consultationId: string) {
     .returning()
 
   revalidatePath('/consultations')
+  revalidatePath(`/consultations/${consultationId}`)
+  revalidatePath('/notifications')
+  return updated[0]
+}
+
+export async function rescheduleConsultation(
+  consultationId: string,
+  scheduledAt: string,
+) {
+  const consultation = await getConsultation(consultationId)
+  const scheduledDate = new Date(scheduledAt)
+
+  if (consultation.status !== 'scheduled') {
+    throw new Error('Only scheduled consultations can be rescheduled')
+  }
+
+  if (Number.isNaN(scheduledDate.getTime())) {
+    throw new Error('Invalid scheduled time')
+  }
+
+  if (scheduledDate <= new Date()) {
+    throw new Error('Cannot reschedule consultation in the past')
+  }
+
+  if (!isThirtyMinuteBlock(scheduledDate)) {
+    throw new Error('Consultations must start on a 30-minute block')
+  }
+
+  const doctor = await db
+    .select({
+      id: user.id,
+      isAvailable: user.isAvailable,
+      availableFrom: user.availableFrom,
+      availableUntil: user.availableUntil,
+    })
+    .from(user)
+    .where(and(eq(user.id, consultation.doctorId), isNotNull(user.specialty)))
+    .limit(1)
+
+  if (!doctor[0]) {
+    throw new Error('Doctor not found')
+  }
+
+  if (!doctor[0].isAvailable) {
+    throw new Error('Doctor is not available for booking')
+  }
+
+  if (
+    !isWithinDoctorAvailability(
+      scheduledDate,
+      doctor[0].availableFrom,
+      doctor[0].availableUntil,
+    )
+  ) {
+    throw new Error('Selected time is outside doctor availability')
+  }
+
+  const slotEnd = new Date(
+    scheduledDate.getTime() + CONSULTATION_BLOCK_MINUTES * 60 * 1000,
+  )
+  const conflictWindowStart = new Date(
+    scheduledDate.getTime() - (CONSULTATION_BLOCK_MINUTES - 1) * 60 * 1000,
+  )
+
+  const existingConsultation = await db
+    .select({ id: consultations.id })
+    .from(consultations)
+    .where(
+      and(
+        eq(consultations.doctorId, consultation.doctorId),
+        ne(consultations.id, consultationId),
+        inArray(consultations.status, ['scheduled', 'in-progress']),
+        gte(consultations.scheduledAt, conflictWindowStart),
+        lt(consultations.scheduledAt, slotEnd),
+      ),
+    )
+    .limit(1)
+
+  if (existingConsultation[0]) {
+    throw new Error('Doctor already has a consultation at that time')
+  }
+
+  const updated = await db
+    .update(consultations)
+    .set({
+      scheduledAt: scheduledDate,
+      updatedAt: new Date(),
+    })
+    .where(eq(consultations.id, consultationId))
+    .returning()
+
+  revalidatePath('/consultations')
+  revalidatePath(`/consultations/${consultationId}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/notifications')
   return updated[0]
 }
 

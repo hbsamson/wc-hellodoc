@@ -2,8 +2,10 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import {
+  cancelConsultation,
   endConsultation,
   getConsultationWorkspace,
+  rescheduleConsultation,
   saveConsultationNotes,
   savePrescription,
   startConsultation,
@@ -22,7 +24,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { ArrowLeft, ClipboardList, FileText, Pill, UserRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarClock,
+  ClipboardList,
+  FileText,
+  Pill,
+  UserRound,
+} from 'lucide-react'
 
 interface ConsultationDetailPageProps {
   params: Promise<{
@@ -89,6 +98,11 @@ export default async function ConsultationDetailPage({
             isDoctor={isDoctor}
             patientName={patientName}
             doctorName={doctorName}
+            scheduledAt={consultation.scheduledAt}
+            doctorAvailability={{
+              availableFrom: doctor?.availableFrom,
+              availableUntil: doctor?.availableUntil,
+            }}
           />
         ) : consultation.status === 'in-progress' ? (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -128,42 +142,130 @@ function WaitingRoom({
   isDoctor,
   patientName,
   doctorName,
+  scheduledAt,
+  doctorAvailability,
 }: {
   consultationId: string
   isDoctor: boolean
   patientName: string
   doctorName: string
+  scheduledAt: Date
+  doctorAvailability: {
+    availableFrom?: string | null
+    availableUntil?: string | null
+  }
 }) {
+  const defaultDate = formatDateForInput(scheduledAt)
+  const defaultTime = formatTimeForInput(scheduledAt)
+  const minDate = formatDateForInput(new Date())
+  const availabilityText =
+    doctorAvailability.availableFrom && doctorAvailability.availableUntil
+      ? `${doctorAvailability.availableFrom.slice(0, 5)}-${doctorAvailability.availableUntil.slice(0, 5)}`
+      : null
+
   return (
-    <Card className="mx-auto max-w-2xl">
-      <CardHeader className="text-center">
-        <CardTitle>{isDoctor ? 'Patient is in the waiting room' : 'Waiting room'}</CardTitle>
-        <CardDescription>
-          {isDoctor
-            ? `${patientName} can join once you start the session.`
-            : `${doctorName} will let you in when the consultation is ready.`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex justify-center pb-8">
-        {isDoctor ? (
+    <div className="mx-auto grid max-w-2xl gap-4">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle>{isDoctor ? 'Patient is in the waiting room' : 'Waiting room'}</CardTitle>
+          <CardDescription>
+            {isDoctor
+              ? `${patientName} can join once you start the session.`
+              : `${doctorName} will let you in when the consultation is ready.`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center pb-8">
+          {isDoctor ? (
+            <form
+              action={async () => {
+                'use server'
+                await startConsultation(consultationId)
+                redirect(`/consultations/${consultationId}`)
+              }}
+            >
+              <Button size="lg" type="submit">
+                Let Patient In
+              </Button>
+            </form>
+          ) : (
+            <div className="rounded-md bg-muted px-4 py-3 text-sm text-muted-foreground">
+              Keep this page open. Refresh if your doctor has started the session.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <CalendarClock className="h-5 w-5 text-primary" />
+            Appointment Schedule
+          </CardTitle>
+          <CardDescription>
+            {availabilityText
+              ? `Doctor availability: ${availabilityText}`
+              : 'Choose a future 30-minute start time.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <form
-            action={async () => {
+            className="grid gap-3"
+            action={async (formData) => {
               'use server'
-              await startConsultation(consultationId)
+              const date = String(formData.get('date') || '')
+              const time = String(formData.get('time') || '')
+              await rescheduleConsultation(
+                consultationId,
+                new Date(`${date}T${time}`).toISOString(),
+              )
               redirect(`/consultations/${consultationId}`)
             }}
           >
-            <Button size="lg" type="submit">
-              Let Patient In
-            </Button>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="appointment-date">Date</Label>
+                <Input
+                  id="appointment-date"
+                  name="date"
+                  type="date"
+                  min={minDate}
+                  defaultValue={defaultDate}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="appointment-time">Time</Label>
+                <Input
+                  id="appointment-time"
+                  name="time"
+                  type="time"
+                  step={30 * 60}
+                  defaultValue={defaultTime}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button type="submit" variant="outline">
+                Reschedule
+              </Button>
+              <Button
+                type="submit"
+                variant="destructive"
+                formNoValidate
+                formAction={async () => {
+                  'use server'
+                  await cancelConsultation(consultationId)
+                  redirect('/consultations')
+                }}
+              >
+                Cancel Appointment
+              </Button>
+            </div>
           </form>
-        ) : (
-          <div className="rounded-md bg-muted px-4 py-3 text-sm text-muted-foreground">
-            Keep this page open. Refresh if your doctor has started the session.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
@@ -438,4 +540,12 @@ function Info({ label, value }: { label: string; value?: string | null }) {
       <p className="whitespace-pre-wrap">{value || 'Not provided'}</p>
     </div>
   )
+}
+
+function formatDateForInput(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function formatTimeForInput(date: Date) {
+  return date.toTimeString().slice(0, 5)
 }
