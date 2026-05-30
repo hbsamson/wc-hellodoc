@@ -135,7 +135,7 @@ export function DashboardNav({
     userType === "doctor"
       ? [
           { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-          { label: "Schedule", href: "/consultations", icon: CalendarDays },
+          // { label: "Schedule", href: "/consultations", icon: CalendarDays },
           { label: "Consultation", href: "/consultations", icon: VideoIcon },
           {
             label: "Medical Records",
