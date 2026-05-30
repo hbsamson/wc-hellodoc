@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getUserRole } from "@/app/actions/helpers";
+import { getUnreadNotificationCount } from "@/app/actions/notifications";
 import {
   AuthTopBar,
   DashboardNav,
@@ -34,6 +35,8 @@ export default async function RootLayout({
   const userRole = session?.user ? await getUserRole() : null;
   const userType = userRole === "doctor" ? "doctor" : "patient";
 
+  const unreadCount = session?.user ? await getUnreadNotificationCount() : 0;
+
   return (
     <html lang="en" className="bg-background" suppressHydrationWarning>
       <meta name="apple-mobile-web-app-title" content="HelloDoc" />
@@ -53,10 +56,12 @@ export default async function RootLayout({
                 userEmail={session.user.email || ""}
                 userType={userType}
                 image={session.user.image || null}
+                unreadCount={unreadCount}
               />
               <DashboardNav
                 userType={userType}
                 toggleId="app-sidebar-expanded"
+                unreadCount={unreadCount}
               />
               <div className="app-content pt-32 transition-[padding] duration-200 lg:pt-16">
                 {children}

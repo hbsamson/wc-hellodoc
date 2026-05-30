@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 type DashboardNavProps = {
   userType: "patient" | "doctor";
   toggleId: string;
+  unreadCount?: number;
 };
 
 type AuthTopBarProps = {
@@ -30,6 +31,7 @@ type AuthTopBarProps = {
   userEmail: string;
   userType: "patient" | "doctor";
   image?: string | null;
+  unreadCount?: number;
 };
 
 export function AuthTopBar({
@@ -37,6 +39,7 @@ export function AuthTopBar({
   userEmail,
   userType,
   image,
+  unreadCount = 0,
 }: AuthTopBarProps) {
   const profileHref =
     userType === "doctor" ? "/doctor-profile" : "/patient-profile";
@@ -64,6 +67,18 @@ export function AuthTopBar({
         </Link>
 
         <div className="flex items-center justify-end gap-2">
+          <Link
+            href="/notifications"
+            className="relative flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-gray-300"
+            title="Notifications"
+          >
+            <Bell className="h-5 w-5 shrink-0" />
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground leading-none">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
           <ThemeToggle />
 
           <Link
@@ -111,7 +126,11 @@ export function AuthTopBar({
   );
 }
 
-export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
+export function DashboardNav({
+  userType,
+  toggleId,
+  unreadCount = 0,
+}: DashboardNavProps) {
   const navItems =
     userType === "doctor"
       ? [
@@ -156,9 +175,16 @@ export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
               >
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-2 lg:h-10 lg:px-3"
+                  className="w-full justify-start gap-2 lg:h-10 lg:px-3 relative"
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="relative">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.label === "Notifications" && unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground leading-none">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </span>
                   <span className="sidebar-label whitespace-nowrap transition-all duration-200">
                     {item.label}
                   </span>
@@ -192,7 +218,7 @@ export function PublicNav() {
       <div className="container mx-auto flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/hellodoc.png"
+            src="/hellodoc-logo.png"
             alt="HelloDoc"
             width={36}
             height={36}

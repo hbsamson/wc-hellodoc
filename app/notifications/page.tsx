@@ -6,6 +6,7 @@ import {
   getPatientConsultations,
 } from '@/app/actions/consultations'
 import { getUserRole } from '@/app/actions/helpers'
+import { markNotificationsRead } from '@/app/actions/notifications'
 import {
   AppointmentNotification,
   NotificationsFeed,
@@ -18,6 +19,9 @@ export default async function NotificationsPage() {
   if (!session?.user) {
     redirect('/sign-in')
   }
+
+  // Mark all notifications as read when the page is opened
+  await markNotificationsRead()
 
   const userRole = await getUserRole()
   const isDoctor = userRole === 'doctor'

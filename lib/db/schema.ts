@@ -45,6 +45,7 @@ export const user = pgTable("user", {
   availableFrom: time("availableFrom"),
   availableUntil: time("availableUntil"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
+  lastReadNotificationsAt: timestamp("last_read_notifications_at"),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
