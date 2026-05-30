@@ -120,12 +120,31 @@ export async function getPatientConsultations() {
   const userId = await getUserId();
 
   const patientConsultations = await db
-    .select()
+    .select({
+      id: consultations.id,
+      patientId: consultations.patientId,
+      doctorId: consultations.doctorId,
+      scheduledAt: consultations.scheduledAt,
+      status: consultations.status,
+      startedAt: consultations.startedAt,
+      endedAt: consultations.endedAt,
+      notes: consultations.notes,
+      prescriptionId: consultations.prescriptionId,
+      createdAt: consultations.createdAt,
+      updatedAt: consultations.updatedAt,
+
+      doctorName: user.name,
+      doctorEmail: user.email,
+      doctorSpecialty: user.specialty,
+    })
     .from(consultations)
-    .where(eq(consultations.patientId, userId));
+    .innerJoin(user, eq(consultations.doctorId, user.id))
+    .where(eq(consultations.patientId, userId))
+    .orderBy(desc(consultations.scheduledAt));
 
   return patientConsultations;
 }
+
 export async function getDoctorConsultations() {
   const userId = await getUserId();
 

@@ -83,7 +83,7 @@ export function AuthTopBar({
 
           <Link
             href={profileHref}
-            className="border flex items-center gap-3 rounded-md px-2 py-1 transition-colors hover:bg-gray-300"
+            className="border flex items-center gap-3 rounded-md px-2 py-1 transition-colors hover:bg-gray-300 dark:hover:text-grey-900"
           >
             <Avatar className="h-9 w-9 shrink-0">
               <AvatarImage src={image ?? undefined} alt={userLabel} />

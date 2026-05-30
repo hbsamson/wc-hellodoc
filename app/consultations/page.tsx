@@ -1,22 +1,22 @@
-import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import {
   getDoctorConsultations,
   getPatientConsultations,
-} from '@/app/actions/consultations'
-import { getUserRole } from '@/app/actions/helpers'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+} from "@/app/actions/consultations";
+import { getUserRole } from "@/app/actions/helpers";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { ConsultationStartTimer } from '@/components/consultation-start-timer'
-import Link from 'next/link'
+} from "@/components/ui/card";
+import { ConsultationStartTimer } from "@/components/consultation-start-timer";
+import Link from "next/link";
 import {
   Calendar,
   CalendarCheck,
@@ -24,47 +24,47 @@ import {
   Clock,
   Stethoscope,
   VideoIcon,
-} from 'lucide-react'
+} from "lucide-react";
 
-type Consultation = Awaited<ReturnType<typeof getPatientConsultations>>[number]
+type Consultation = Awaited<ReturnType<typeof getPatientConsultations>>[number];
 
 export default async function ConsultationsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
-  const userRole = await getUserRole()
-  const isDoctor = userRole === 'doctor'
+  const userRole = await getUserRole();
+  const isDoctor = userRole === "doctor";
 
   const consultations = isDoctor
     ? await getDoctorConsultations()
-    : await getPatientConsultations()
+    : await getPatientConsultations();
 
-  const now = new Date()
+  const now = new Date();
   const sortedConsultations = [...consultations].sort(
     (a, b) =>
       new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-  )
+  );
   const categorizedConsultations = {
-    scheduled: sortedConsultations.filter((c) => c.status === 'scheduled'),
-    inProgress: sortedConsultations.filter((c) => c.status === 'in-progress'),
+    scheduled: sortedConsultations.filter((c) => c.status === "scheduled"),
+    inProgress: sortedConsultations.filter((c) => c.status === "in-progress"),
     completed: [...sortedConsultations]
-      .filter((c) => c.status === 'completed')
+      .filter((c) => c.status === "completed")
       .sort(
         (a, b) =>
           new Date(b.endedAt || b.scheduledAt).getTime() -
           new Date(a.endedAt || a.scheduledAt).getTime(),
       ),
-    cancelled: sortedConsultations.filter((c) => c.status === 'cancelled'),
-  }
+    cancelled: sortedConsultations.filter((c) => c.status === "cancelled"),
+  };
   const upcomingSchedule = sortedConsultations.filter(
     (consultation) =>
-      ['scheduled', 'in-progress'].includes(consultation.status) &&
-      (consultation.status === 'in-progress' ||
+      ["scheduled", "in-progress"].includes(consultation.status) &&
+      (consultation.status === "in-progress" ||
         new Date(consultation.scheduledAt) >= now),
-  )
-  const nextConsultation = upcomingSchedule[0]
+  );
+  const nextConsultation = upcomingSchedule[0];
 
   return (
     <main className="container mx-auto px-6 py-10 sm:px-8 lg:px-10">
@@ -77,23 +77,25 @@ export default async function ConsultationsPage() {
               Consultation Center
             </p>
             <h1 className="mt-2 text-4xl font-bold text-teal-950 dark:text-white">
-              {isDoctor ? 'Manage patient sessions' : 'Your consultation visits'}
+              {isDoctor
+                ? "Manage patient sessions"
+                : "Your consultation visits"}
             </h1>
             <p className="mt-2 text-teal-950/70 dark:text-teal-50/80">
               {nextConsultation
                 ? `Next schedule: ${formatDateTime(nextConsultation.scheduledAt)}.`
                 : isDoctor
-                  ? 'Review upcoming appointments, active calls, notes, and completed sessions.'
-                  : 'Join scheduled appointments, check visit status, and review past care notes.'}
+                  ? "Review upcoming appointments, active calls, notes, and completed sessions."
+                  : "Join scheduled appointments, check visit status, and review past care notes."}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               {nextConsultation ? (
                 <Link href={`/consultations/${nextConsultation.id}`}>
                   <Button className="gap-2">
                     <VideoIcon className="h-4 w-4" />
-                    {nextConsultation.status === 'in-progress'
-                      ? 'Join Active Session'
-                      : 'Open Next Schedule'}
+                    {nextConsultation.status === "in-progress"
+                      ? "Join Active Session"
+                      : "Open Next Schedule"}
                   </Button>
                 </Link>
               ) : !isDoctor ? (
@@ -112,12 +114,14 @@ export default async function ConsultationsPage() {
               Upcoming schedule
             </p>
             {upcomingSchedule.length > 0 ? (
-              upcomingSchedule.slice(0, 3).map((consultation) => (
-                <ScheduleMiniItem
-                  key={consultation.id}
-                  consultation={consultation}
-                />
-              ))
+              upcomingSchedule
+                .slice(0, 3)
+                .map((consultation) => (
+                  <ScheduleMiniItem
+                    key={consultation.id}
+                    consultation={consultation}
+                  />
+                ))
             ) : (
               <p className="rounded-md border border-dashed bg-background/70 p-4 text-sm text-muted-foreground">
                 No upcoming schedules yet.
@@ -190,8 +194,8 @@ export default async function ConsultationsPage() {
             </CardTitle>
             <CardDescription>
               {isDoctor
-                ? 'Patients waiting for their scheduled appointments.'
-                : 'Your next online appointment windows.'}
+                ? "Patients waiting for their scheduled appointments."
+                : "Your next online appointment windows."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -220,7 +224,7 @@ export default async function ConsultationsPage() {
         </Card>
       </section>
     </main>
-  )
+  );
 }
 
 function SummaryCard({
@@ -229,10 +233,10 @@ function SummaryCard({
   label,
   icon: Icon,
 }: {
-  title: string
-  value: number
-  label: string
-  icon: typeof VideoIcon
+  title: string;
+  value: number;
+  label: string;
+  icon: typeof VideoIcon;
 }) {
   return (
     <Card>
@@ -247,7 +251,7 @@ function SummaryCard({
         </span>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function ConsultationSection({
@@ -258,12 +262,12 @@ function ConsultationSection({
   actionLabel,
   statusTone,
 }: {
-  title: string
-  description: string
-  consultations: Consultation[]
-  emptyText: string
-  actionLabel: string
-  statusTone: 'active' | 'scheduled' | 'completed'
+  title: string;
+  description: string;
+  consultations: Consultation[];
+  emptyText: string;
+  actionLabel: string;
+  statusTone: "active" | "scheduled" | "completed";
 }) {
   return (
     <Card>
@@ -290,7 +294,7 @@ function ConsultationSection({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function ConsultationRow({
@@ -298,9 +302,9 @@ function ConsultationRow({
   actionLabel,
   statusTone,
 }: {
-  consultation: Consultation
-  actionLabel: string
-  statusTone: 'active' | 'scheduled' | 'completed'
+  consultation: Consultation;
+  actionLabel: string;
+  statusTone: "active" | "scheduled" | "completed";
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-md border p-4 transition-colors hover:border-primary sm:flex-row sm:items-center sm:justify-between">
@@ -323,14 +327,14 @@ function ConsultationRow({
       </div>
       <Link href={`/consultations/${consultation.id}`}>
         <Button
-          variant={consultation.status === 'completed' ? 'outline' : 'default'}
+          variant={consultation.status === "completed" ? "outline" : "default"}
           className="w-full sm:w-auto"
         >
           {actionLabel}
         </Button>
       </Link>
     </div>
-  )
+  );
 }
 
 function ScheduleMiniItem({ consultation }: { consultation: Consultation }) {
@@ -346,8 +350,8 @@ function ScheduleMiniItem({ consultation }: { consultation: Consultation }) {
           </p>
           <p className="text-xs text-muted-foreground">
             {new Date(consultation.scheduledAt).toLocaleTimeString([], {
-              hour: 'numeric',
-              minute: '2-digit',
+              hour: "numeric",
+              minute: "2-digit",
             })}
           </p>
           <ConsultationStartTimer
@@ -358,11 +362,11 @@ function ScheduleMiniItem({ consultation }: { consultation: Consultation }) {
         </div>
         <StatusBadge
           status={consultation.status}
-          tone={consultation.status === 'in-progress' ? 'active' : 'scheduled'}
+          tone={consultation.status === "in-progress" ? "active" : "scheduled"}
         />
       </div>
     </Link>
-  )
+  );
 }
 
 function ScheduleListItem({ consultation }: { consultation: Consultation }) {
@@ -379,8 +383,8 @@ function ScheduleListItem({ consultation }: { consultation: Consultation }) {
           <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
             {new Date(consultation.scheduledAt).toLocaleTimeString([], {
-              hour: 'numeric',
-              minute: '2-digit',
+              hour: "numeric",
+              minute: "2-digit",
             })}
           </p>
           <div className="mt-2">
@@ -393,39 +397,39 @@ function ScheduleListItem({ consultation }: { consultation: Consultation }) {
         </div>
         <StatusBadge
           status={consultation.status}
-          tone={consultation.status === 'in-progress' ? 'active' : 'scheduled'}
+          tone={consultation.status === "in-progress" ? "active" : "scheduled"}
         />
       </div>
     </Link>
-  )
+  );
 }
 
 function StatusBadge({
   status,
   tone,
 }: {
-  status: string
-  tone: 'active' | 'scheduled' | 'completed'
+  status: string;
+  tone: "active" | "scheduled" | "completed";
 }) {
   const className =
-    tone === 'active'
-      ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
-      : tone === 'scheduled'
-        ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-        : 'bg-muted text-muted-foreground'
+    tone === "active"
+      ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+      : tone === "scheduled"
+        ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+        : "bg-muted text-muted-foreground";
 
   return (
     <Badge className={`${className} shrink-0 whitespace-nowrap capitalize`}>
       {status}
     </Badge>
-  )
+  );
 }
 
 function formatDateTime(value: string | Date) {
-  const date = new Date(value)
+  const date = new Date(value);
 
   return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  })}`
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
 }
