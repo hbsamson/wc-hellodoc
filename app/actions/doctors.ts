@@ -14,6 +14,8 @@ export async function createDoctorProfile(data: {
   experienceYears?: number
   hourlyRate?: string
   isAvailable?: boolean
+  availableFrom?: string
+  availableUntil?: string
 }) {
   const userId = await getUserId()
 
@@ -26,6 +28,8 @@ export async function createDoctorProfile(data: {
       experienceYears: data.experienceYears,
       hourlyRate: data.hourlyRate,
       isAvailable: data.isAvailable ?? true,
+      availableFrom: data.availableFrom,
+      availableUntil: data.availableUntil,
       updatedAt: new Date(),
     })
     .where(eq(user.id, userId))
@@ -52,6 +56,8 @@ export async function updateDoctorProfile(data: {
   experienceYears?: number
   hourlyRate?: string
   isAvailable?: boolean
+  availableFrom?: string
+  availableUntil?: string
 }) {
   const userId = await getUserId()
 

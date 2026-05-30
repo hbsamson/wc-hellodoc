@@ -2,7 +2,12 @@
 
 import { db } from '@/lib/db'
 import { consultations, user } from '@/lib/db/schema'
-import { eq, and, gte, isNotNull, or } from 'drizzle-orm'
+import {
+  CONSULTATION_BLOCK_MINUTES,
+  isThirtyMinuteBlock,
+  isWithinDoctorAvailability,
+} from '@/lib/consultation-scheduling'
+import { eq, and, gte, inArray, isNotNull, lt, or } from 'drizzle-orm'
 import { getUserId } from './helpers'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
@@ -12,8 +17,27 @@ export async function bookConsultation(data: {
   scheduledAt: string
 }) {
   const userId = await getUserId()
+  const scheduledDate = new Date(data.scheduledAt)
+
+  if (Number.isNaN(scheduledDate.getTime())) {
+    throw new Error('Invalid scheduled time')
+  }
+
+  if (scheduledDate <= new Date()) {
+    throw new Error('Cannot book consultation in the past')
+  }
+
+  if (!isThirtyMinuteBlock(scheduledDate)) {
+    throw new Error('Consultations must start on a 30-minute block')
+  }
+
   const doctor = await db
-    .select({ id: user.id })
+    .select({
+      id: user.id,
+      isAvailable: user.isAvailable,
+      availableFrom: user.availableFrom,
+      availableUntil: user.availableUntil,
+    })
     .from(user)
     .where(and(eq(user.id, data.doctorId), isNotNull(user.specialty)))
     .limit(1)
@@ -22,13 +46,51 @@ export async function bookConsultation(data: {
     throw new Error('Doctor not found')
   }
 
+  if (!doctor[0].isAvailable) {
+    throw new Error('Doctor is not available for booking')
+  }
+
+  if (
+    !isWithinDoctorAvailability(
+      scheduledDate,
+      doctor[0].availableFrom,
+      doctor[0].availableUntil,
+    )
+  ) {
+    throw new Error('Selected time is outside doctor availability')
+  }
+
+  const slotEnd = new Date(
+    scheduledDate.getTime() + CONSULTATION_BLOCK_MINUTES * 60 * 1000,
+  )
+  const conflictWindowStart = new Date(
+    scheduledDate.getTime() - (CONSULTATION_BLOCK_MINUTES - 1) * 60 * 1000,
+  )
+
+  const existingConsultation = await db
+    .select({ id: consultations.id })
+    .from(consultations)
+    .where(
+      and(
+        eq(consultations.doctorId, data.doctorId),
+        inArray(consultations.status, ['scheduled', 'in-progress']),
+        gte(consultations.scheduledAt, conflictWindowStart),
+        lt(consultations.scheduledAt, slotEnd),
+      ),
+    )
+    .limit(1)
+
+  if (existingConsultation[0]) {
+    throw new Error('Doctor already has a consultation at that time')
+  }
+
   const consultation = await db
     .insert(consultations)
     .values({
       id: nanoid(),
       patientId: userId,
       doctorId: data.doctorId,
-      scheduledAt: new Date(data.scheduledAt),
+      scheduledAt: scheduledDate,
       status: 'scheduled',
     })
     .returning()

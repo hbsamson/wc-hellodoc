@@ -11,6 +11,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  CONSULTATION_BLOCK_MINUTES,
+  parseTimeToMinutes,
+} from '@/lib/consultation-scheduling'
+import {
   Card,
   CardContent,
   CardDescription,
@@ -54,10 +58,51 @@ export default async function DoctorProfileEditorPage() {
       experienceYears: optionalNumber(formData.get('experienceYears')),
       hourlyRate: optionalString(formData.get('hourlyRate')),
       isAvailable: formData.get('isAvailable') === 'on',
+      availableFrom: optionalString(formData.get('availableFrom')),
+      availableUntil: optionalString(formData.get('availableUntil')),
     }
 
     if (!data.specialty) {
       throw new Error('Specialty is required')
+    }
+
+    const availableFromMinutes = parseTimeToMinutes(data.availableFrom)
+    const availableUntilMinutes = parseTimeToMinutes(data.availableUntil)
+
+    if (
+      (data.availableFrom && availableFromMinutes === null) ||
+      (data.availableUntil && availableUntilMinutes === null)
+    ) {
+      throw new Error('Availability times are invalid')
+    }
+
+    if (
+      (availableFromMinutes === null && availableUntilMinutes !== null) ||
+      (availableFromMinutes !== null && availableUntilMinutes === null)
+    ) {
+      throw new Error('Set both availability start and end times')
+    }
+
+    if (
+      availableFromMinutes !== null &&
+      availableUntilMinutes !== null &&
+      availableUntilMinutes - availableFromMinutes < CONSULTATION_BLOCK_MINUTES
+    ) {
+      throw new Error('Availability must include at least one 30-minute block')
+    }
+
+    if (
+      availableFromMinutes !== null &&
+      availableFromMinutes % CONSULTATION_BLOCK_MINUTES !== 0
+    ) {
+      throw new Error('Availability start must be on a 30-minute block')
+    }
+
+    if (
+      availableUntilMinutes !== null &&
+      availableUntilMinutes % CONSULTATION_BLOCK_MINUTES !== 0
+    ) {
+      throw new Error('Availability end must be on a 30-minute block')
     }
 
     const userId = await auth.api
@@ -168,6 +213,30 @@ export default async function DoctorProfileEditorPage() {
                   />
                   Available for booking
                 </label>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="availableFrom">Available From</Label>
+                  <Input
+                    id="availableFrom"
+                    name="availableFrom"
+                    type="time"
+                    step="1800"
+                    defaultValue={profile?.availableFrom?.slice(0, 5) || ''}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="availableUntil">Available Until</Label>
+                  <Input
+                    id="availableUntil"
+                    name="availableUntil"
+                    type="time"
+                    step="1800"
+                    defaultValue={profile?.availableUntil?.slice(0, 5) || ''}
+                  />
+                </div>
               </div>
 
               <Button type="submit" className="w-full">
