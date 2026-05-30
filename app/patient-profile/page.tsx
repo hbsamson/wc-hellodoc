@@ -1,6 +1,6 @@
-import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
-import Link from 'next/link'
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import Link from "next/link";
 import {
   ArrowLeft,
   Camera,
@@ -8,134 +8,128 @@ import {
   HeartPulse,
   Phone,
   UserRound,
-} from 'lucide-react'
-import { auth } from '@/lib/auth'
+} from "lucide-react";
+import { auth } from "@/lib/auth";
 import {
   getPatientProfile,
   isPatientProfileComplete,
   savePatientProfileImage,
   updatePatientProfile,
-} from '@/app/actions/patients'
-import { Button } from '@/components/ui/button'
+} from "@/app/actions/patients";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 function optionalString(value: FormDataEntryValue | null) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return undefined
+  if (typeof value !== "string" || value.trim() === "") {
+    return undefined;
   }
 
-  return value.trim()
+  return value.trim();
 }
 
 function requiredString(value: FormDataEntryValue | null) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new Error('Missing required field')
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error("Missing required field");
   }
 
-  return value.trim()
+  return value.trim();
 }
 
 function splitName(name?: string | null) {
   if (!name) {
-    return { givenName: '', lastName: '' }
+    return { givenName: "", lastName: "" };
   }
 
-  const parts = name.trim().split(/\s+/)
+  const parts = name.trim().split(/\s+/);
   return {
-    givenName: parts[0] || '',
-    lastName: parts.slice(1).join(' '),
-  }
+    givenName: parts[0] || "",
+    lastName: parts.slice(1).join(" "),
+  };
 }
 
 async function saveProfileImage(file: FormDataEntryValue | null) {
   if (!(file instanceof File) || file.size === 0) {
-    return undefined
+    return undefined;
   }
 
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Profile picture must be an image')
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Profile picture must be an image");
   }
 
-  const maxSize = 5 * 1024 * 1024
+  const maxSize = 5 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new Error('Profile picture must be 5MB or smaller')
+    throw new Error("Profile picture must be 5MB or smaller");
   }
 
-  return savePatientProfileImage(file)
+  return savePatientProfileImage(file);
 }
 
 export default async function PatientProfilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ onboarding?: string }>
+  searchParams: Promise<{ onboarding?: string }>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
   const [{ onboarding }, profile] = await Promise.all([
     searchParams,
     getPatientProfile(session.user.id),
-  ])
-  const isOnboarding = onboarding === '1'
-  const isComplete = profile ? await isPatientProfileComplete(profile) : false
+  ]);
+  const isOnboarding = onboarding === "1";
+  const isComplete = profile ? await isPatientProfileComplete(profile) : false;
   const profileName =
     profile?.givenName || profile?.lastName
       ? {
-          givenName: profile.givenName || '',
-          lastName: profile.lastName || '',
+          givenName: profile.givenName || "",
+          lastName: profile.lastName || "",
         }
-      : splitName(profile?.name || session.user.name)
+      : splitName(profile?.name || session.user.name);
 
   async function savePatientProfile(formData: FormData) {
-    'use server'
+    "use server";
 
-    const uploadedImage = await saveProfileImage(formData.get('image'))
-    const existingImage = optionalString(formData.get('existingImage'))
-    const givenName = requiredString(formData.get('givenName'))
-    const lastName = requiredString(formData.get('lastName'))
+    const uploadedImage = await saveProfileImage(formData.get("image"));
+    const existingImage = optionalString(formData.get("existingImage"));
+    const givenName = requiredString(formData.get("givenName"));
+    const lastName = requiredString(formData.get("lastName"));
 
     await updatePatientProfile({
       name: `${givenName} ${lastName}`,
       givenName,
       lastName,
-      birthday: requiredString(formData.get('birthday')),
-      weightKg: requiredString(formData.get('weightKg')),
-      heightCm: requiredString(formData.get('heightCm')),
+      birthday: requiredString(formData.get("birthday")),
+      weightKg: requiredString(formData.get("weightKg")),
+      heightCm: requiredString(formData.get("heightCm")),
       image: uploadedImage || existingImage,
-      phoneNumber: requiredString(formData.get('phoneNumber')),
-      address: optionalString(formData.get('address')),
-      emergencyContactName: optionalString(formData.get('emergencyContactName')),
-      emergencyContactPhone: optionalString(formData.get('emergencyContactPhone')),
-      medicalHistory: requiredString(formData.get('medicalHistory')),
-    })
+      phoneNumber: requiredString(formData.get("phoneNumber")),
+      address: optionalString(formData.get("address")),
+      emergencyContactName: optionalString(
+        formData.get("emergencyContactName"),
+      ),
+      emergencyContactPhone: optionalString(
+        formData.get("emergencyContactPhone"),
+      ),
+      medicalHistory: requiredString(formData.get("medicalHistory")),
+    });
 
-    redirect('/dashboard')
+    redirect("/dashboard");
   }
 
   return (
     <div className="min-h-screen">
       <main className="container mx-auto max-w-3xl px-4 py-10">
-        <div className="mb-6 flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          </Link>
-          <h1 className="text-lg font-semibold">Patient Profile</h1>
-        </div>
-
         <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-semibold">Medical History Files</h2>
@@ -156,8 +150,8 @@ export default async function PatientProfilePage({
           <CardHeader>
             <CardTitle>
               {isOnboarding && !isComplete
-                ? 'Complete Your Patient Profile'
-                : 'Edit Patient Profile'}
+                ? "Complete Your Patient Profile"
+                : "Edit Patient Profile"}
             </CardTitle>
             <CardDescription>
               Keep your details current so doctors have the basics before a
@@ -201,7 +195,7 @@ export default async function PatientProfilePage({
                       id="birthday"
                       name="birthday"
                       type="date"
-                      defaultValue={profile?.birthday || ''}
+                      defaultValue={profile?.birthday || ""}
                       required
                     />
                   </div>
@@ -216,7 +210,7 @@ export default async function PatientProfilePage({
                       type="number"
                       min="0"
                       step="0.01"
-                      defaultValue={profile?.weightKg || ''}
+                      defaultValue={profile?.weightKg || ""}
                       required
                     />
                   </div>
@@ -229,7 +223,7 @@ export default async function PatientProfilePage({
                       type="number"
                       min="0"
                       step="0.01"
-                      defaultValue={profile?.heightCm || ''}
+                      defaultValue={profile?.heightCm || ""}
                       required
                     />
                   </div>
@@ -254,11 +248,16 @@ export default async function PatientProfilePage({
                       )}
                     </div>
                     <div className="flex-1 space-y-2">
-                      <Input id="image" name="image" type="file" accept="image/*" />
+                      <Input
+                        id="image"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                      />
                       <input
                         type="hidden"
                         name="existingImage"
-                        value={profile?.image || ''}
+                        value={profile?.image || ""}
                       />
                       <p className="text-xs text-muted-foreground">
                         Upload a JPG, PNG, or WebP image up to 5MB.
@@ -281,7 +280,7 @@ export default async function PatientProfilePage({
                       id="phoneNumber"
                       name="phoneNumber"
                       type="tel"
-                      defaultValue={profile?.phoneNumber || ''}
+                      defaultValue={profile?.phoneNumber || ""}
                       required
                     />
                   </div>
@@ -294,7 +293,7 @@ export default async function PatientProfilePage({
                       id="emergencyContactPhone"
                       name="emergencyContactPhone"
                       type="tel"
-                      defaultValue={profile?.emergencyContactPhone || ''}
+                      defaultValue={profile?.emergencyContactPhone || ""}
                     />
                   </div>
                 </div>
@@ -306,7 +305,7 @@ export default async function PatientProfilePage({
                   <Input
                     id="emergencyContactName"
                     name="emergencyContactName"
-                    defaultValue={profile?.emergencyContactName || ''}
+                    defaultValue={profile?.emergencyContactName || ""}
                   />
                 </div>
 
@@ -316,7 +315,7 @@ export default async function PatientProfilePage({
                     id="address"
                     name="address"
                     rows={3}
-                    defaultValue={profile?.address || ''}
+                    defaultValue={profile?.address || ""}
                   />
                 </div>
               </section>
@@ -335,7 +334,7 @@ export default async function PatientProfilePage({
                     id="medicalHistory"
                     name="medicalHistory"
                     rows={6}
-                    defaultValue={profile?.medicalHistory || ''}
+                    defaultValue={profile?.medicalHistory || ""}
                     required
                   />
                 </div>
@@ -349,5 +348,5 @@ export default async function PatientProfilePage({
         </Card>
       </main>
     </div>
-  )
+  );
 }

@@ -1,44 +1,44 @@
-import { redirect, notFound } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
-import { getDoctorById, getDoctorReviews } from '@/app/actions/doctors'
-import { Button } from '@/components/ui/button'
+import { redirect, notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { getDoctorById, getDoctorReviews } from "@/app/actions/doctors";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, DollarSign, Star } from 'lucide-react'
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { ArrowLeft, Calendar, Clock, DollarSign, Star } from "lucide-react";
 
 interface DoctorProfilePageProps {
   params: Promise<{
-    doctorId: string
-  }>
+    doctorId: string;
+  }>;
 }
 
 export default async function DoctorProfilePage({
   params,
 }: DoctorProfilePageProps) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
-  const { doctorId } = await params
-  const doctor = await getDoctorById(doctorId)
+  const { doctorId } = await params;
+  const doctor = await getDoctorById(doctorId);
   if (!doctor) {
-    notFound()
+    notFound();
   }
 
-  const reviews = await getDoctorReviews(doctor.id)
+  const reviews = await getDoctorReviews(doctor.id);
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-      : null
+      : null;
 
   return (
     <div className="min-h-screen">
@@ -59,7 +59,7 @@ export default async function DoctorProfilePage({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <CardTitle className="text-3xl">
-                    {doctor.name || 'Doctor'}
+                    {doctor.name || "Doctor"}
                   </CardTitle>
                   <CardDescription className="mt-2 text-base">
                     {doctor.specialty}
@@ -93,8 +93,8 @@ export default async function DoctorProfilePage({
                     <p className="text-sm text-muted-foreground">Rate</p>
                     <p className="font-semibold">
                       {doctor.hourlyRate
-                        ? `$${doctor.hourlyRate}/session`
-                        : 'Not set'}
+                        ? `P{doctor.hourlyRate}/session`
+                        : "Not set"}
                     </p>
                   </div>
                 </div>
@@ -102,11 +102,13 @@ export default async function DoctorProfilePage({
                 <div className="flex items-center gap-3 rounded-lg border p-4">
                   <Calendar className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Availability</p>
+                    <p className="text-sm text-muted-foreground">
+                      Availability
+                    </p>
                     <p className="font-semibold">
                       {doctor.availableFrom && doctor.availableUntil
                         ? `${doctor.availableFrom} - ${doctor.availableUntil}`
-                        : 'Flexible'}
+                        : "Flexible"}
                     </p>
                   </div>
                 </div>
@@ -116,7 +118,9 @@ export default async function DoctorProfilePage({
                   <div>
                     <p className="text-sm text-muted-foreground">Rating</p>
                     <p className="font-semibold">
-                      {averageRating ? averageRating.toFixed(1) : 'No reviews yet'}
+                      {averageRating
+                        ? averageRating.toFixed(1)
+                        : "No reviews yet"}
                     </p>
                   </div>
                 </div>
@@ -139,7 +143,7 @@ export default async function DoctorProfilePage({
           </Card>
         </div>
 
-        <section className="mt-8">
+        {/* <section className="mt-8">
           <h2 className="mb-4 text-2xl font-bold">Reviews</h2>
           {reviews.length === 0 ? (
             <Card>
@@ -164,8 +168,8 @@ export default async function DoctorProfilePage({
               ))}
             </div>
           )}
-        </section>
+        </section> */}
       </main>
     </div>
-  )
+  );
 }
