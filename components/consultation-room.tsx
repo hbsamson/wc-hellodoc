@@ -1,30 +1,62 @@
-'use client'
+"use client";
 
-import { ExternalLink, Video } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useEffect, useState } from "react";
+import { ExternalLink, Video } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { getConsultationToken } from "@/app/actions/consultations";
 
 interface ConsultationRoomProps {
-  consultationId: string
-  roomName: string
-  isLive?: boolean
-  isDoctor?: boolean
-  displayName?: string
-  waitingTitle?: string
-  waitingDescription?: string
+  consultationId: string;
+  roomName: string;
+  isLive?: boolean;
+  isDoctor?: boolean;
+  displayName?: string;
+  waitingTitle?: string;
+  waitingDescription?: string;
 }
 
+/**
+ * Daily.co embedded video room.
+ *
+ * When live, fetches a meeting token (server-side) that pre-fills the
+ * participant's display name — no name prompt on join.
+ *
+ * Env var:  NEXT_PUBLIC_DAILY_DOMAIN
+ */
 export function ConsultationRoom({
   consultationId,
   roomName,
   isLive = true,
   isDoctor = false,
-  displayName = 'HelloDoc Guest',
-  waitingTitle = 'Waiting room',
-  waitingDescription = 'The embedded video room will open when the consultation starts.',
+  displayName = "HelloDoc Guest",
+  waitingTitle = "Waiting room",
+  waitingDescription = "The embedded video room will open when the consultation starts.",
 }: ConsultationRoomProps) {
-  const encodedRoomName = encodeURIComponent(roomName)
-  const encodedDisplayName = encodeURIComponent(JSON.stringify(displayName))
-  const roomUrl = `https://meet.jit.si/${encodedRoomName}#config.prejoinPageEnabled=false&config.requireDisplayName=false&config.startWithAudioMuted=true&config.startWithVideoMuted=true&config.startWithLobbyDisabled=true&config.enableWelcomePage=false&config.disableDeepLinking=true&config.p2p.enabled=true&config.resolution=720&userInfo.displayName=${encodedDisplayName}`
+  const dailyDomain =
+    process.env.NEXT_PUBLIC_DAILY_DOMAIN || "wc-hellodoc.daily.co";
+
+  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState(false);
+
+  useEffect(() => {
+    if (!isLive) return;
+
+    getConsultationToken(consultationId)
+      .then((token) => {
+        // Daily.co token URL format: https://{domain}/{room}?t={token}
+        setRoomUrl(
+          `https://${dailyDomain}/${encodeURIComponent(roomName)}?t=${encodeURIComponent(token)}`,
+        );
+      })
+      .catch((err) => {
+        console.error("Failed to get meeting token:", err);
+        // Fallback to plain URL (user will be prompted for name)
+        setRoomUrl(
+          `https://${dailyDomain}/${encodeURIComponent(roomName)}`,
+        );
+        setTokenError(true);
+      });
+  }, [isLive, consultationId, roomName, dailyDomain]);
 
   return (
     <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-md border bg-background xl:min-h-0">
@@ -40,12 +72,12 @@ export function ConsultationRoom({
             </p>
             {isDoctor && isLive ? (
               <p className="text-xs text-muted-foreground">
-                Doctor room is active. Patient can join this session now.
+                Room is live — the patient can join now.
               </p>
             ) : null}
           </div>
         </div>
-        {isLive ? (
+        {isLive && roomUrl ? (
           <a href={roomUrl} target="_blank" rel="noreferrer">
             <Button variant="outline" className="w-full gap-2 sm:w-auto">
               <ExternalLink className="h-4 w-4" />
@@ -59,9 +91,9 @@ export function ConsultationRoom({
           </Button>
         )}
       </div>
-      {isLive ? (
+      {isLive && roomUrl ? (
         <iframe
-          title="Embedded consultation video room"
+          title="Virtual consultation room"
           src={roomUrl}
           allow="camera; microphone; fullscreen; display-capture; autoplay"
           className="h-full min-h-[360px] w-full flex-1 border-0 xl:min-h-0"
@@ -78,5 +110,5 @@ export function ConsultationRoom({
         </div>
       )}
     </div>
-  )
+  );
 }

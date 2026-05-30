@@ -16,6 +16,7 @@ import { eq, and, desc, gte, inArray, isNotNull, lt, ne, or } from 'drizzle-orm'
 import { getUserId } from './helpers'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
+import { createDailyRoom, getMeetingToken } from '@/lib/daily'
 
 export async function bookConsultation(data: {
   doctorId: string
@@ -249,6 +250,10 @@ export async function startConsultation(consultationId: string) {
     throw new Error('Only doctor can start consultation')
   }
 
+  // Create a Daily.co room so the video call works immediately
+  const roomName = `hellodoc-${consultation.id}`
+  await createDailyRoom(roomName)
+
   const updated = await db
     .update(consultations)
     .set({
@@ -260,7 +265,32 @@ export async function startConsultation(consultationId: string) {
     .returning()
 
   revalidatePath('/consultations')
+  revalidatePath(`/consultations/${consultationId}`)
   return updated[0]
+}
+
+/**
+ * Returns a Daily.co meeting token for the current user so they can
+ * join the room with their display name pre-filled (no name prompt).
+ */
+export async function getConsultationToken(consultationId: string) {
+  const userId = await getUserId()
+  const consultation = await getConsultation(consultationId)
+
+  const isDoctor = consultation.doctorId === userId
+  const roomName = `hellodoc-${consultation.id}`
+
+  // Look up the participant's display name
+  const [participant] = await db
+    .select({ name: user.name })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1)
+
+  const userName = participant?.name || 'Guest'
+
+  const token = await getMeetingToken(roomName, userName, isDoctor)
+  return token
 }
 
 export async function endConsultation(consultationId: string, notes?: string) {
