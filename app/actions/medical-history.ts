@@ -1,45 +1,66 @@
-'use server'
+"use server";
 
-import { db } from '@/lib/db'
-import { patientMedicalFiles } from '@/lib/db/schema'
-import { desc, eq } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
-import { nanoid } from 'nanoid'
-import { getUserId } from './helpers'
+import { db } from "@/lib/db";
+import { patientMedicalFiles } from "@/lib/db/schema";
+import { cloudinary } from "@/lib/cloudinary";
+import { desc, eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
+import { getUserId } from "./helpers";
 
-export async function getPatientMedicalFiles() {
-  const userId = await getUserId()
+async function uploadMedicalFileToCloudinary(file: File) {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
 
-  return db
-    .select({
-      id: patientMedicalFiles.id,
-      filename: patientMedicalFiles.filename,
-      mimeType: patientMedicalFiles.mimeType,
-      size: patientMedicalFiles.size,
-      description: patientMedicalFiles.description,
-      createdAt: patientMedicalFiles.createdAt,
-    })
-    .from(patientMedicalFiles)
-    .where(eq(patientMedicalFiles.userId, userId))
-    .orderBy(desc(patientMedicalFiles.createdAt))
+  const result = await new Promise<{
+    secure_url: string;
+    public_id: string;
+  }>((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: "patient-medical-files",
+          resource_type: "auto",
+        },
+        (error, result) => {
+          if (error || !result) {
+            reject(error);
+            return;
+          }
+
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+          });
+        },
+      )
+      .end(buffer);
+  });
+
+  return result;
 }
 
 export async function savePatientMedicalFile(file: File, description?: string) {
-  const userId = await getUserId()
-  const id = nanoid()
-  const buffer = Buffer.from(await file.arrayBuffer())
+  const userId = await getUserId();
+  const uploaded = await uploadMedicalFileToCloudinary(file);
 
   await db.insert(patientMedicalFiles).values({
-    id,
+    id: nanoid(),
     userId,
-    data: buffer,
-    mimeType: file.type || 'application/octet-stream',
+    url: uploaded.secure_url,
+    publicId: uploaded.public_id,
     filename: file.name,
+    mimeType: file.type,
     size: file.size,
     description,
-  })
+  });
+}
 
-  revalidatePath('/patient-medical-history')
+export async function getPatientMedicalFiles() {
+  const userId = await getUserId();
 
-  return `/api/patient-medical-history/file/${id}`
+  return db
+    .select()
+    .from(patientMedicalFiles)
+    .where(eq(patientMedicalFiles.userId, userId))
+    .orderBy(desc(patientMedicalFiles.createdAt));
 }

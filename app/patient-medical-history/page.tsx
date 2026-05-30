@@ -1,92 +1,95 @@
-import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
-import Link from 'next/link'
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import Link from "next/link";
 import {
   ArrowLeft,
   CalendarDays,
   FileText,
   FolderOpen,
   Upload,
-} from 'lucide-react'
-import { auth } from '@/lib/auth'
+} from "lucide-react";
+import { auth } from "@/lib/auth";
 import {
   getPatientMedicalFiles,
   savePatientMedicalFile,
-} from '@/app/actions/medical-history'
-import { Button } from '@/components/ui/button'
+} from "@/app/actions/medical-history";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 function optionalString(value: FormDataEntryValue | null) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return undefined
+  if (typeof value !== "string" || value.trim() === "") {
+    return undefined;
   }
 
-  return value.trim()
+  return value.trim();
 }
 
 function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
-    return `${Math.max(1, Math.round(size / 1024))} KB`
+    return `${Math.max(1, Math.round(size / 1024))} KB`;
   }
 
-  return `${(size / 1024 / 1024).toFixed(1)} MB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  return new Date(date).toLocaleDateString("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 async function validateAndSaveMedicalFile(formData: FormData) {
-  'use server'
+  "use server";
 
-  const file = formData.get('file')
+  const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error('Please choose a medical file to upload')
+    throw new Error("Please choose a medical file to upload");
   }
 
   const allowedTypes = new Set([
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'text/plain',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ])
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "text/plain",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]);
 
   if (!allowedTypes.has(file.type)) {
-    throw new Error('Upload a PDF, image, text, DOC, or DOCX file')
+    throw new Error("Upload a PDF, image, text, DOC, or DOCX file");
   }
 
-  const maxSize = 10 * 1024 * 1024
+  const maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new Error('Medical files must be 10MB or smaller')
+    throw new Error("Medical files must be 10MB or smaller");
   }
 
-  await savePatientMedicalFile(file, optionalString(formData.get('description')))
-  redirect('/patient-medical-history')
+  await savePatientMedicalFile(
+    file,
+    optionalString(formData.get("description")),
+  );
+  redirect("/patient-medical-history");
 }
 
 export default async function PatientMedicalHistoryPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
-  const files = await getPatientMedicalFiles()
+  const files = await getPatientMedicalFiles();
 
   return (
     <div className="min-h-screen">
@@ -131,7 +134,9 @@ export default async function PatientMedicalHistoryPage() {
                           <FileText className="h-5 w-5 text-primary" />
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate font-medium">{file.filename}</p>
+                          <p className="truncate font-medium">
+                            {file.filename}
+                          </p>
                           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                             <span>{formatFileSize(file.size)}</span>
                             <span className="flex items-center gap-1">
@@ -146,11 +151,12 @@ export default async function PatientMedicalHistoryPage() {
                           )}
                         </div>
                       </div>
-                      <Link
-                        href={`/api/patient-medical-history/file/${file.id}`}
-                        target="_blank"
-                      >
-                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                      <Link href={file.url} target="_blank">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto"
+                        >
                           View
                         </Button>
                       </Link>
@@ -208,5 +214,5 @@ export default async function PatientMedicalHistoryPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

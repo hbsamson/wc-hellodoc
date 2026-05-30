@@ -127,12 +127,13 @@ export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
           { label: "Find Doctors", href: "/doctors", icon: Search },
           { label: "AI Recommendation", href: "/doctors", icon: Bot },
           { label: "Consultations", href: "/consultations", icon: VideoIcon },
-          { label: "Notifications", href: "/notifications", icon: Bell },
           {
             label: "Medical Records",
             href: "/patient-medical-history",
             icon: FileText,
           },
+          { label: "Notifications", href: "/notifications", icon: Bell },
+          { label: "Profile", href: "/patient-profile", icon: UserRound },
         ];
 
   return (
