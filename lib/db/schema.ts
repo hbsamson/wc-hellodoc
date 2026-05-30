@@ -22,6 +22,9 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name'),
+  givenName: text('given_name'),
+  lastName: text('last_name'),
+  userType: text('user_type').notNull().default('patient'),
   email: text('email').notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: text('image'),
@@ -126,6 +129,16 @@ export const patientMedicalFiles = pgTable('patient_medical_files', {
   filename: text('filename').notNull(),
   size: integer('size').notNull(),
   description: text('description'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
+
+export const doctorLicenseFiles = pgTable('doctor_license_files', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull(),
+  data: bytea('data').notNull(),
+  mimeType: text('mime_type').notNull(),
+  filename: text('filename').notNull(),
+  size: integer('size').notNull(),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 

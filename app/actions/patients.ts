@@ -9,6 +9,8 @@ import { getUserId } from './helpers'
 
 export type PatientProfileData = {
   name: string
+  givenName: string
+  lastName: string
   birthday?: string
   weightKg?: string
   heightCm?: string
@@ -37,6 +39,9 @@ export async function updatePatientProfile(data: PatientProfileData) {
     .update(user)
     .set({
       name: data.name,
+      givenName: data.givenName,
+      lastName: data.lastName,
+      userType: 'patient',
       birthday: data.birthday,
       weightKg: data.weightKg,
       heightCm: data.heightCm,

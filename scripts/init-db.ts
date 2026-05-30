@@ -9,6 +9,9 @@ const createTablesSQL = `
 CREATE TABLE IF NOT EXISTS "user" (
   id TEXT PRIMARY KEY,
   name TEXT,
+  "given_name" TEXT,
+  "last_name" TEXT,
+  "user_type" TEXT NOT NULL DEFAULT 'patient',
   email TEXT UNIQUE NOT NULL,
   "emailVerified" BOOLEAN DEFAULT FALSE,
   image TEXT,
@@ -115,6 +118,16 @@ CREATE TABLE IF NOT EXISTS "patient_medical_files" (
   "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "doctor_license_files" (
+  id TEXT PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  data BYTEA NOT NULL,
+  "mime_type" TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS "reviews" (
   id TEXT PRIMARY KEY,
   "doctorId" TEXT NOT NULL,
@@ -128,6 +141,7 @@ CREATE TABLE IF NOT EXISTS "reviews" (
 -- Create indices for better query performance
 CREATE INDEX IF NOT EXISTS idx_session_user_id ON "session"("userId");
 CREATE INDEX IF NOT EXISTS idx_account_user_id ON "account"("userId");
+CREATE INDEX IF NOT EXISTS idx_user_type ON "user"("user_type");
 CREATE INDEX IF NOT EXISTS idx_user_doctors_available ON "user"("isAvailable", specialty);
 CREATE INDEX IF NOT EXISTS idx_consultations_patient_id ON "consultations"("patientId");
 CREATE INDEX IF NOT EXISTS idx_consultations_doctor_id ON "consultations"("doctorId");
@@ -136,6 +150,7 @@ CREATE INDEX IF NOT EXISTS idx_prescriptions_patient_id ON "prescriptions"("pati
 CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor_id ON "prescriptions"("doctorId");
 CREATE INDEX IF NOT EXISTS idx_patient_profile_images_user_id ON "patient_profile_images"("userId");
 CREATE INDEX IF NOT EXISTS idx_patient_medical_files_user_id ON "patient_medical_files"("userId");
+CREATE INDEX IF NOT EXISTS idx_doctor_license_files_user_id ON "doctor_license_files"("userId");
 CREATE INDEX IF NOT EXISTS idx_reviews_doctor_id ON "reviews"("doctorId");
 `
 

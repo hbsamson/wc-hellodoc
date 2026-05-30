@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
+import { updateCurrentUserIdentity } from '@/app/actions/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,13 +12,15 @@ import { AlertCircle } from 'lucide-react'
 
 interface AuthFormProps {
   mode: 'sign-in' | 'sign-up'
+  userType?: 'patient' | 'doctor'
 }
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, userType = 'patient' }: AuthFormProps) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [givenName, setGivenName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,10 +31,21 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === 'sign-up') {
+        const name = [givenName, lastName]
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .join(' ')
+
         await authClient.signUp.email({
           email,
           password,
           name: name || email.split('@')[0],
+        })
+
+        await updateCurrentUserIdentity({
+          givenName,
+          lastName,
+          userType,
         })
       } else {
         await authClient.signIn.email({
@@ -40,7 +54,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         })
       }
 
-      router.push(mode === 'sign-up' ? '/patient-profile?onboarding=1' : '/dashboard')
+      const onboardingPath =
+        userType === 'doctor'
+          ? '/doctor-profile?onboarding=1'
+          : '/patient-profile?onboarding=1'
+
+      router.push(mode === 'sign-up' ? onboardingPath : '/dashboard')
       router.refresh()
     } catch (err) {
       setError(
@@ -61,16 +80,32 @@ export function AuthForm({ mode }: AuthFormProps) {
       )}
 
       {mode === 'sign-up' && (
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="John Doe"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={loading}
-          />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="givenName">Given Name</Label>
+            <Input
+              id="givenName"
+              type="text"
+              placeholder="John"
+              value={givenName}
+              onChange={(e) => setGivenName(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              type="text"
+              placeholder="Doe"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
         </div>
       )}
 

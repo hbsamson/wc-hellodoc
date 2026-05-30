@@ -94,7 +94,9 @@ export default async function DoctorProfilePage({
                   <div>
                     <p className="text-sm text-muted-foreground">Rate</p>
                     <p className="font-semibold">
-                      {doctor.hourlyRate ? `$${doctor.hourlyRate}/hour` : 'Not set'}
+                      {doctor.hourlyRate
+                        ? `$${doctor.hourlyRate}/session`
+                        : 'Not set'}
                     </p>
                   </div>
                 </div>

@@ -1,13 +1,16 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { reviews, user } from '@/lib/db/schema'
+import { doctorLicenseFiles, reviews, user } from '@/lib/db/schema'
 import { and, desc, eq, isNotNull } from 'drizzle-orm'
 import { getUserId } from './helpers'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
 
 export async function createDoctorProfile(data: {
+  name?: string
+  givenName?: string
+  lastName?: string
   specialty: string
   bio?: string
   licenseNumber?: string
@@ -22,6 +25,10 @@ export async function createDoctorProfile(data: {
   const profile = await db
     .update(user)
     .set({
+      name: data.name,
+      givenName: data.givenName,
+      lastName: data.lastName,
+      userType: 'doctor',
       specialty: data.specialty,
       bio: data.bio,
       licenseNumber: data.licenseNumber,
@@ -50,6 +57,9 @@ export async function getDoctorProfile(userId: string) {
 }
 
 export async function updateDoctorProfile(data: {
+  name?: string
+  givenName?: string
+  lastName?: string
   specialty?: string
   bio?: string
   licenseNumber?: string
@@ -72,6 +82,23 @@ export async function updateDoctorProfile(data: {
 
   revalidatePath('/dashboard')
   return updated[0] || null
+}
+
+export async function saveDoctorLicenseId(file: File) {
+  const userId = await getUserId()
+  const id = nanoid()
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  await db.insert(doctorLicenseFiles).values({
+    id,
+    userId,
+    data: buffer,
+    mimeType: file.type,
+    filename: file.name,
+    size: file.size,
+  })
+
+  return id
 }
 
 export async function getAllDoctors() {

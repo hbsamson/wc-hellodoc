@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { getPatientConsultations, getDoctorConsultations } from '@/app/actions/consultations'
-import { getDoctorProfile } from '@/app/actions/doctors'
+import { getUserRole } from '@/app/actions/helpers'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
@@ -14,8 +14,8 @@ export default async function DashboardPage() {
     redirect('/sign-in')
   }
 
-  const doctorProfile = await getDoctorProfile(session.user.id)
-  const isDoctor = !!doctorProfile
+  const userRole = await getUserRole()
+  const isDoctor = userRole === 'doctor'
 
   let consultations = []
   if (isDoctor) {

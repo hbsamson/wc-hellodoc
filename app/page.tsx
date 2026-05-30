@@ -22,6 +22,9 @@ export default function HomePage() {
             <Link href="/sign-up">
               <Button>Sign Up</Button>
             </Link>
+            <Link href="/sign-up?userType=doctor" className="hidden sm:block">
+              <Button variant="outline">Sign Up as Doctor</Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -41,6 +44,11 @@ export default function HomePage() {
             <Link href="/sign-up">
               <Button size="lg" className="w-full sm:w-auto">
                 Get Started Free
+              </Button>
+            </Link>
+            <Link href="/sign-up?userType=doctor">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                Sign Up as Doctor
               </Button>
             </Link>
             <Link href="/doctors">

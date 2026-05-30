@@ -78,7 +78,7 @@ export default async function DoctorsPage() {
                   )}
                   {doctor.hourlyRate && (
                     <p className="text-lg font-semibold text-primary mb-4">
-                      ${doctor.hourlyRate}/hour
+                      ${doctor.hourlyRate}/session
                     </p>
                   )}
                   <div className="flex gap-2 mt-auto">

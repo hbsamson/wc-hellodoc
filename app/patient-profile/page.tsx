@@ -44,6 +44,18 @@ function requiredString(value: FormDataEntryValue | null) {
   return value.trim()
 }
 
+function splitName(name?: string | null) {
+  if (!name) {
+    return { givenName: '', lastName: '' }
+  }
+
+  const parts = name.trim().split(/\s+/)
+  return {
+    givenName: parts[0] || '',
+    lastName: parts.slice(1).join(' '),
+  }
+}
+
 async function saveProfileImage(file: FormDataEntryValue | null) {
   if (!(file instanceof File) || file.size === 0) {
     return undefined
@@ -77,15 +89,26 @@ export default async function PatientProfilePage({
   ])
   const isOnboarding = onboarding === '1'
   const isComplete = profile ? await isPatientProfileComplete(profile) : false
+  const profileName =
+    profile?.givenName || profile?.lastName
+      ? {
+          givenName: profile.givenName || '',
+          lastName: profile.lastName || '',
+        }
+      : splitName(profile?.name || session.user.name)
 
   async function savePatientProfile(formData: FormData) {
     'use server'
 
     const uploadedImage = await saveProfileImage(formData.get('image'))
     const existingImage = optionalString(formData.get('existingImage'))
+    const givenName = requiredString(formData.get('givenName'))
+    const lastName = requiredString(formData.get('lastName'))
 
     await updatePatientProfile({
-      name: requiredString(formData.get('name')),
+      name: `${givenName} ${lastName}`,
+      givenName,
+      lastName,
       birthday: requiredString(formData.get('birthday')),
       weightKg: requiredString(formData.get('weightKg')),
       heightCm: requiredString(formData.get('heightCm')),
@@ -153,15 +176,27 @@ export default async function PatientProfilePage({
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="givenName">Given Name</Label>
                     <Input
-                      id="name"
-                      name="name"
-                      defaultValue={profile?.name || session.user.name || ''}
+                      id="givenName"
+                      name="givenName"
+                      defaultValue={profileName.givenName}
                       required
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      defaultValue={profileName.lastName}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="birthday">Birthday</Label>
                     <Input
