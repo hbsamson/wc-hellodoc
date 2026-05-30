@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {
   Bot,
   CalendarDays,
+  Bell,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -85,6 +86,7 @@ export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
           { label: 'Schedule', href: '/consultations', icon: CalendarDays },
           { label: 'Consultation', href: '/consultations', icon: VideoIcon },
           { label: 'Notes', href: '/consultations', icon: Stethoscope },
+          { label: 'Notifications', href: '/notifications', icon: Bell },
           { label: 'Profile', href: '/doctor-profile', icon: UserRound },
         ]
       : [
@@ -92,6 +94,7 @@ export function DashboardNav({ userType, toggleId }: DashboardNavProps) {
           { label: 'Find Doctors', href: '/doctors', icon: Search },
           { label: 'AI Recommendation', href: '/doctors', icon: Bot },
           { label: 'Consultations', href: '/consultations', icon: VideoIcon },
+          { label: 'Notifications', href: '/notifications', icon: Bell },
           { label: 'Medical Records', href: '/patient-medical-history', icon: FileText },
         ]
 
