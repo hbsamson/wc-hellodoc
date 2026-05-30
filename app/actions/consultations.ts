@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { consultations } from '@/lib/db/schema'
-import { eq, and, gte } from 'drizzle-orm'
+import { consultations, user } from '@/lib/db/schema'
+import { eq, and, gte, isNotNull, or } from 'drizzle-orm'
 import { getUserId } from './helpers'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
@@ -12,6 +12,15 @@ export async function bookConsultation(data: {
   scheduledAt: string
 }) {
   const userId = await getUserId()
+  const doctor = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.id, data.doctorId), isNotNull(user.specialty)))
+    .limit(1)
+
+  if (!doctor[0]) {
+    throw new Error('Doctor not found')
+  }
 
   const consultation = await db
     .insert(consultations)
@@ -60,7 +69,7 @@ export async function getConsultation(consultationId: string) {
     .where(
       and(
         eq(consultations.id, consultationId),
-        // Ensure user is either patient or doctor
+        or(eq(consultations.patientId, userId), eq(consultations.doctorId, userId)),
       ),
     )
     .limit(1)
@@ -126,7 +135,6 @@ export async function endConsultation(consultationId: string, notes?: string) {
 }
 
 export async function cancelConsultation(consultationId: string) {
-  const userId = await getUserId()
   const consultation = await getConsultation(consultationId)
 
   // Allow cancellation by patient or doctor
@@ -154,6 +162,7 @@ export async function getUpcomingConsultations() {
       and(
         gte(consultations.scheduledAt, now),
         eq(consultations.status, 'scheduled'),
+        or(eq(consultations.patientId, userId), eq(consultations.doctorId, userId)),
       ),
     )
 

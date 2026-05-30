@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { consultations } from '@/lib/db/schema'
+import { consultations, user } from '@/lib/db/schema'
+import { and, eq, isNotNull } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { nanoid } from 'nanoid'
 
@@ -21,6 +22,18 @@ export async function POST(request: Request) {
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400 },
       )
+    }
+
+    const doctor = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(and(eq(user.id, doctorId), isNotNull(user.specialty)))
+      .limit(1)
+
+    if (!doctor[0]) {
+      return new Response(JSON.stringify({ error: 'Doctor not found' }), {
+        status: 404,
+      })
     }
 
     // Create consultation

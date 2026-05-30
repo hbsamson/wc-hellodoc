@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from '@/lib/db'
-import { doctorProfiles, reviews } from '@/lib/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { reviews, user } from '@/lib/db/schema'
+import { and, desc, eq, isNotNull } from 'drizzle-orm'
 import { getUserId } from './helpers'
 import { revalidatePath } from 'next/cache'
 import { nanoid } from 'nanoid'
@@ -13,20 +13,22 @@ export async function createDoctorProfile(data: {
   licenseNumber?: string
   experienceYears?: number
   hourlyRate?: string
+  isAvailable?: boolean
 }) {
   const userId = await getUserId()
 
   const profile = await db
-    .insert(doctorProfiles)
-    .values({
-      id: nanoid(),
-      userId,
+    .update(user)
+    .set({
       specialty: data.specialty,
       bio: data.bio,
       licenseNumber: data.licenseNumber,
       experienceYears: data.experienceYears,
       hourlyRate: data.hourlyRate,
+      isAvailable: data.isAvailable ?? true,
+      updatedAt: new Date(),
     })
+    .where(eq(user.id, userId))
     .returning()
 
   revalidatePath('/dashboard')
@@ -36,8 +38,8 @@ export async function createDoctorProfile(data: {
 export async function getDoctorProfile(userId: string) {
   const profile = await db
     .select()
-    .from(doctorProfiles)
-    .where(eq(doctorProfiles.userId, userId))
+    .from(user)
+    .where(and(eq(user.id, userId), isNotNull(user.specialty)))
     .limit(1)
 
   return profile[0] || null
@@ -54,12 +56,12 @@ export async function updateDoctorProfile(data: {
   const userId = await getUserId()
 
   const updated = await db
-    .update(doctorProfiles)
+    .update(user)
     .set({
       ...data,
       updatedAt: new Date(),
     })
-    .where(eq(doctorProfiles.userId, userId))
+    .where(eq(user.id, userId))
     .returning()
 
   revalidatePath('/dashboard')
@@ -69,8 +71,8 @@ export async function updateDoctorProfile(data: {
 export async function getAllDoctors() {
   const doctors = await db
     .select()
-    .from(doctorProfiles)
-    .where(eq(doctorProfiles.isAvailable, true))
+    .from(user)
+    .where(and(eq(user.isAvailable, true), isNotNull(user.specialty)))
 
   return doctors
 }
@@ -78,8 +80,8 @@ export async function getAllDoctors() {
 export async function getDoctorById(doctorId: string) {
   const doctor = await db
     .select()
-    .from(doctorProfiles)
-    .where(eq(doctorProfiles.id, doctorId))
+    .from(user)
+    .where(and(eq(user.id, doctorId), isNotNull(user.specialty)))
     .limit(1)
 
   return doctor[0] || null

@@ -1,6 +1,9 @@
 'use server'
 
 import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { user } from '@/lib/db/schema'
+import { and, eq, isNotNull } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 export async function getUserId(): Promise<string> {
@@ -16,7 +19,11 @@ export async function getUserRole(): Promise<'patient' | 'doctor' | null> {
   if (!session?.user) {
     return null
   }
-  // Store user role in metadata or custom field
-  // For now, check if they have a doctor_profile
-  return 'patient'
+  const doctor = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(eq(user.id, session.user.id), isNotNull(user.specialty)))
+    .limit(1)
+
+  return doctor[0] ? 'doctor' : 'patient'
 }

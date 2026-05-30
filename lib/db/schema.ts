@@ -17,6 +17,14 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: text('image'),
+  specialty: text('specialty'),
+  bio: text('bio'),
+  licenseNumber: text('license_number'),
+  experienceYears: integer('experience_years'),
+  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }),
+  isAvailable: boolean('isAvailable').notNull().default(false),
+  availableFrom: time('availableFrom'),
+  availableUntil: time('availableUntil'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
@@ -58,21 +66,6 @@ export const verification = pgTable('verification', {
 })
 
 // --- HelloDoc app tables ---------------------------------------------------
-
-export const doctorProfiles = pgTable('doctor_profiles', {
-  id: text('id').primaryKey(),
-  userId: text('userId').notNull(),
-  specialty: text('specialty').notNull(),
-  bio: text('bio'),
-  licenseNumber: text('license_number'),
-  experienceYears: integer('experience_years'),
-  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }),
-  isAvailable: boolean('isAvailable').notNull().default(true),
-  availableFrom: time('availableFrom'),
-  availableUntil: time('availableUntil'),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
-})
 
 export const consultations = pgTable('consultations', {
   id: text('id').primaryKey(),

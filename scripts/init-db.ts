@@ -12,6 +12,14 @@ CREATE TABLE IF NOT EXISTS "user" (
   email TEXT UNIQUE NOT NULL,
   "emailVerified" BOOLEAN DEFAULT FALSE,
   image TEXT,
+  specialty TEXT,
+  bio TEXT,
+  "license_number" TEXT,
+  "experience_years" INTEGER,
+  "hourly_rate" DECIMAL(10, 2),
+  "isAvailable" BOOLEAN DEFAULT FALSE,
+  "availableFrom" TIME,
+  "availableUntil" TIME,
   "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -53,21 +61,6 @@ CREATE TABLE IF NOT EXISTS "verification" (
 );
 
 -- HelloDoc app tables
-CREATE TABLE IF NOT EXISTS "doctor_profiles" (
-  id TEXT PRIMARY KEY,
-  "userId" TEXT NOT NULL,
-  specialty TEXT NOT NULL,
-  bio TEXT,
-  "license_number" TEXT,
-  "experience_years" INTEGER,
-  "hourly_rate" DECIMAL(10, 2),
-  "isAvailable" BOOLEAN DEFAULT TRUE,
-  "availableFrom" TIME,
-  "availableUntil" TIME,
-  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS "consultations" (
   id TEXT PRIMARY KEY,
   "patientId" TEXT NOT NULL,
@@ -106,7 +99,7 @@ CREATE TABLE IF NOT EXISTS "reviews" (
 -- Create indices for better query performance
 CREATE INDEX IF NOT EXISTS idx_session_user_id ON "session"("userId");
 CREATE INDEX IF NOT EXISTS idx_account_user_id ON "account"("userId");
-CREATE INDEX IF NOT EXISTS idx_doctor_profiles_user_id ON "doctor_profiles"("userId");
+CREATE INDEX IF NOT EXISTS idx_user_doctors_available ON "user"("isAvailable", specialty);
 CREATE INDEX IF NOT EXISTS idx_consultations_patient_id ON "consultations"("patientId");
 CREATE INDEX IF NOT EXISTS idx_consultations_doctor_id ON "consultations"("doctorId");
 CREATE INDEX IF NOT EXISTS idx_consultations_scheduled_at ON "consultations"("scheduledAt");

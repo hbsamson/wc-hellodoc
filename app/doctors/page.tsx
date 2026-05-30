@@ -5,7 +5,6 @@ import { getAllDoctors } from '@/app/actions/doctors'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { Star } from 'lucide-react'
 
 export default async function DoctorsPage() {
   const session = await auth.api.getSession({ headers: await headers() })

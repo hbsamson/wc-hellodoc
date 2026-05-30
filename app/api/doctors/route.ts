@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { doctorProfiles, user } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import { user } from '@/lib/db/schema'
+import { and, eq, isNotNull } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 export async function GET(request: Request) {
@@ -16,24 +16,23 @@ export async function GET(request: Request) {
     // Get all available doctors with their user info
     const doctors = await db
       .select({
-        id: doctorProfiles.id,
-        userId: doctorProfiles.userId,
-        specialty: doctorProfiles.specialty,
-        bio: doctorProfiles.bio,
-        licenseNumber: doctorProfiles.licenseNumber,
-        experienceYears: doctorProfiles.experienceYears,
-        hourlyRate: doctorProfiles.hourlyRate,
-        isAvailable: doctorProfiles.isAvailable,
-        availableFrom: doctorProfiles.availableFrom,
-        availableUntil: doctorProfiles.availableUntil,
-        createdAt: doctorProfiles.createdAt,
-        updatedAt: doctorProfiles.updatedAt,
+        id: user.id,
+        userId: user.id,
+        specialty: user.specialty,
+        bio: user.bio,
+        licenseNumber: user.licenseNumber,
+        experienceYears: user.experienceYears,
+        hourlyRate: user.hourlyRate,
+        isAvailable: user.isAvailable,
+        availableFrom: user.availableFrom,
+        availableUntil: user.availableUntil,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
         doctorName: user.name,
         doctorEmail: user.email,
       })
-      .from(doctorProfiles)
-      .leftJoin(user, eq(doctorProfiles.userId, user.id))
-      .where(eq(doctorProfiles.isAvailable, true))
+      .from(user)
+      .where(and(eq(user.isAvailable, true), isNotNull(user.specialty)))
 
     return new Response(JSON.stringify(doctors), {
       status: 200,
