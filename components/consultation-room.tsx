@@ -7,6 +7,7 @@ interface ConsultationRoomProps {
   consultationId: string
   roomName: string
   isLive?: boolean
+  isDoctor?: boolean
   displayName?: string
   waitingTitle?: string
   waitingDescription?: string
@@ -16,13 +17,14 @@ export function ConsultationRoom({
   consultationId,
   roomName,
   isLive = true,
+  isDoctor = false,
   displayName = 'HelloDoc Guest',
   waitingTitle = 'Waiting room',
   waitingDescription = 'The embedded video room will open when the consultation starts.',
 }: ConsultationRoomProps) {
   const encodedRoomName = encodeURIComponent(roomName)
   const encodedDisplayName = encodeURIComponent(JSON.stringify(displayName))
-  const roomUrl = `https://meet.jit.si/${encodedRoomName}#config.prejoinPageEnabled=false&config.requireDisplayName=false&config.startWithAudioMuted=true&config.startWithVideoMuted=true&userInfo.displayName=${encodedDisplayName}`
+  const roomUrl = `https://meet.jit.si/${encodedRoomName}#config.prejoinPageEnabled=false&config.requireDisplayName=false&config.startWithAudioMuted=true&config.startWithVideoMuted=true&config.startWithLobbyDisabled=true&config.enableWelcomePage=false&config.disableDeepLinking=true&config.p2p.enabled=true&config.resolution=720&userInfo.displayName=${encodedDisplayName}`
 
   return (
     <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-md border bg-background xl:min-h-0">
@@ -36,6 +38,11 @@ export function ConsultationRoom({
             <p className="text-sm text-muted-foreground">
               Session {consultationId.slice(0, 8)}
             </p>
+            {isDoctor && isLive ? (
+              <p className="text-xs text-muted-foreground">
+                Doctor room is active. Patient can join this session now.
+              </p>
+            ) : null}
           </div>
         </div>
         {isLive ? (

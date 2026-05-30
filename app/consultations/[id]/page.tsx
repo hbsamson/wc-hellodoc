@@ -127,6 +127,7 @@ export default async function ConsultationDetailPage({
               consultationId={id}
               roomName={roomName}
               isLive={consultation.status === 'in-progress'}
+              isDoctor={isDoctor}
               displayName={displayName}
               waitingTitle={isDoctor ? 'Patient waiting room' : 'Waiting room'}
               waitingDescription={
